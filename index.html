@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ESP32 NodeMCU — Mapa de pines interactivo</title>
+<style>
+  :root{
+    --bg: #0A2E22;
+    --panel: #0F3A2B;
+    --panel-2: #123F30;
+    --line: #1E5744;
+    --copper: #C68642;
+    --copper-bright: #E0A458;
+    --silk: #CFE0D7;
+    --white: #F5F7F5;
+    --muted: #7FA294;
+    --good: #6FBF73;
+    --bad: #E2685E;
+
+    --c-power:#E8A33D;
+    --c-gnd:#6B7D74;
+    --c-gpio:#5EA8A0;
+    --c-adc:#DB6A8C;
+    --c-dac:#A88CE0;
+    --c-touch:#74C77E;
+    --c-uart:#8C9BF2;
+    --c-i2c:#4FBAC9;
+    --c-spi:#E3BD52;
+    --c-flash:#E2685E;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 15% 8%, rgba(198,134,66,0.06), transparent 40%),
+      radial-gradient(circle at 85% 92%, rgba(94,168,160,0.07), transparent 45%),
+      var(--bg);
+    color:var(--white);
+    font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+    min-height:100vh;
+    padding-bottom:190px;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:38px 22px 20px;}
+
+  header{margin-bottom:22px;display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;}
+  .eyebrow{
+    font-family: "Courier New", Consolas, monospace;
+    font-size:12.5px;
+    letter-spacing:1.5px;
+    color:var(--copper-bright);
+    margin:0 0 10px;
+  }
+  h1{
+    font-size:clamp(28px,4vw,42px);
+    margin:0 0 8px;
+    font-weight:700;
+    letter-spacing:-0.01em;
+  }
+  .sub{
+    color:var(--muted);
+    font-size:15.5px;
+    max-width:600px;
+    line-height:1.5;
+    margin:0;
+  }
+
+  .modeswitch{
+    display:flex;
+    gap:0;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:11px;
+    padding:4px;
+    flex:none;
+  }
+  .modeswitch button{
+    font-family:inherit;
+    font-size:13.5px;
+    font-weight:600;
+    color:var(--muted);
+    background:transparent;
+    border:none;
+    padding:9px 18px;
+    border-radius:8px;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+  }
+  .modeswitch button.active{background:var(--copper);color:#0a0a0a;}
+
+  /* legend / filters */
+  .legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin:26px 0 30px;
+  }
+  .chip{
+    font-family: "Courier New", Consolas, monospace;
+    font-size:12px;
+    letter-spacing:0.3px;
+    color:var(--white);
+    background:var(--panel);
+    border:1px solid var(--line);
+    padding:7px 13px 7px 11px;
+    border-radius:20px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:7px;
+    transition:transform .12s ease, border-color .12s ease, opacity .15s ease;
+    user-select:none;
+  }
+  .chip:hover{border-color:var(--copper);}
+  .chip .dot{width:8px;height:8px;border-radius:50%;flex:none;}
+  .chip.active{border-color:var(--copper-bright); background:var(--panel-2);}
+  .chip.dimmed{opacity:0.35;}
+
+  /* quiz bar */
+  .quizbar{
+    display:none;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:20px 22px;
+    margin:26px 0 30px;
+  }
+  .quizbar.visible{display:block;}
+  .quiz-meta{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-family:"Courier New", Consolas, monospace;
+    font-size:12px;
+    color:var(--muted);
+    margin-bottom:12px;
+  }
+  .quiz-meta .score{color:var(--copper-bright);}
+  .quiz-progress{
+    height:5px;
+    background:var(--line);
+    border-radius:4px;
+    overflow:hidden;
+    margin-bottom:16px;
+  }
+  .quiz-progress-fill{height:100%;background:var(--copper);width:0%;transition:width .25s ease;}
+  .quiz-question{font-size:18px;font-weight:600;margin:0 0 4px;}
+  .quiz-hint{font-size:13.5px;color:var(--muted);margin:0;}
+  .quiz-feedback{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    margin-top:14px;
+    padding:12px 14px;
+    border-radius:10px;
+    font-size:14px;
+    font-weight:600;
+    display:none;
+  }
+  .quiz-feedback.show{display:flex;}
+  .quiz-feedback.good{background:rgba(111,191,115,0.15);color:var(--good);}
+  .quiz-feedback.bad{background:rgba(226,104,94,0.15);color:var(--bad);}
+  .quiz-feedback button{
+    font-family:inherit;font-size:13px;font-weight:700;
+    background:var(--copper);color:#0a0a0a;border:none;
+    padding:8px 16px;border-radius:7px;cursor:pointer;flex:none;
+  }
+  .quiz-result{display:none;text-align:center;padding:10px 0 4px;}
+  .quiz-result.show{display:block;}
+  .quiz-result .big{font-size:40px;font-weight:800;color:var(--copper-bright);margin:0 0 6px;}
+  .quiz-result p{color:var(--silk);margin:0 0 16px;font-size:14.5px;}
+  .quiz-result button{
+    font-family:inherit;font-size:13.5px;font-weight:700;
+    background:var(--copper);color:#0a0a0a;border:none;
+    padding:10px 20px;border-radius:8px;cursor:pointer;
+  }
+  .quiz-start{text-align:center;padding:14px 0 6px;}
+  .quiz-start p{color:var(--silk);margin:0 0 16px;font-size:14.5px;}
+  .quiz-start button{
+    font-family:inherit;font-size:14px;font-weight:700;
+    background:var(--copper);color:#0a0a0a;border:none;
+    padding:11px 22px;border-radius:8px;cursor:pointer;
+  }
+
+  /* board layout */
+  .board{
+    display:grid;
+    grid-template-columns: 1fr minmax(150px,220px) 1fr;
+    gap: 10px;
+    align-items:stretch;
+  }
+  .col{display:flex;flex-direction:column;gap:6px;}
+  .col.right .pin{flex-direction:row-reverse;text-align:right;}
+
+  .chipcenter{
+    background:linear-gradient(180deg,#1a1a1a,#0d0d0d);
+    border:1px solid #2b2b2b;
+    border-radius:12px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    padding:18px 10px;
+    position:sticky;
+    top:20px;
+    align-self:start;
+    min-height:520px;
+  }
+  .chipcenter .label{
+    font-family:"Courier New", Consolas, monospace;
+    font-size:13px;
+    color:#e6e6e6;
+    letter-spacing:1px;
+  }
+  .chipcenter .sub2{
+    font-size:10.5px;
+    color:#8a8a8a;
+    text-align:center;
+    line-height:1.5;
+    max-width:150px;
+  }
+  .chipcenter .dot-row{display:flex;gap:5px;margin-top:10px;}
+  .chipcenter .dot-row span{width:5px;height:5px;border-radius:50%;background:#3a3a3a;}
+
+  .pin{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    padding:6px 8px;
+    border-radius:8px;
+    cursor:pointer;
+    border:1px solid transparent;
+    background:transparent;
+    transition:background .12s ease, border-color .12s ease, opacity .15s ease, transform .15s ease;
+  }
+  .pin:hover{background:var(--panel);}
+  .pin.selected{background:var(--panel-2); border-color:var(--copper-bright);}
+  .pin.dimmed{opacity:0.25;}
+  .pin.correct{background:rgba(111,191,115,0.18); border-color:var(--good);}
+  .pin.incorrect{background:rgba(226,104,94,0.18); border-color:var(--bad); animation:shake .3s ease;}
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}
+    25%{transform:translateX(-3px);}
+    75%{transform:translateX(3px);}
+  }
+
+  .num{
+    font-family:"Courier New", Consolas, monospace;
+    font-size:11px;
+    color:#0a0a0a;
+    background:var(--copper);
+    width:22px;height:22px;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    flex:none;
+  }
+  .pin .names{display:flex;flex-direction:column;gap:1px;min-width:0;}
+  .pin .primary{
+    font-size:13.5px;
+    font-weight:600;
+    color:var(--white);
+    white-space:nowrap;
+  }
+  .pin .tags{
+    font-family:"Courier New", Consolas, monospace;
+    font-size:10px;
+    color:var(--muted);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .swatch{width:7px;height:26px;border-radius:3px;flex:none;background:var(--pin-color, var(--line));}
+  body.quiz-mode .swatch{background:var(--line) !important;}
+  body.quiz-mode .pin .tags{visibility:hidden;}
+
+  /* detail panel (explore mode) */
+  .detail{
+    position:fixed;
+    left:0;right:0;bottom:0;
+    background:var(--panel);
+    border-top:1px solid var(--line);
+    padding:18px 22px 22px;
+    box-shadow:0 -12px 30px rgba(0,0,0,0.35);
+  }
+  body.quiz-mode .detail{display:none;}
+  .detail-inner{max-width:1180px;margin:0 auto;display:flex;gap:18px;align-items:flex-start;}
+  .detail-badge{
+    flex:none;
+    width:54px;height:54px;
+    border-radius:12px;
+    display:flex;align-items:center;justify-content:center;
+    font-family:"Courier New", Consolas, monospace;
+    font-weight:700;
+    font-size:15px;
+    color:#0a0a0a;
+  }
+  .detail-body h3{margin:0 0 4px;font-size:18px;}
+  .detail-body .cat{
+    font-family:"Courier New", Consolas, monospace;
+    font-size:11px;
+    letter-spacing:1px;
+    color:var(--copper-bright);
+    margin:0 0 8px;
+  }
+  .detail-body p{margin:0;font-size:14px;line-height:1.55;color:var(--silk);max-width:760px;}
+  .detail.empty .detail-body p{color:var(--muted);}
+  .detail.empty .detail-badge{background:var(--panel-2);color:var(--muted);}
+
+  body.quiz-mode .legend{display:none;}
+
+  @media (max-width: 780px){
+    .board{grid-template-columns:1fr;}
+    .chipcenter{min-height:auto;position:static;flex-direction:row;justify-content:space-between;padding:14px 18px;}
+    .chipcenter .sub2{display:none;}
+    .col.right .pin{flex-direction:row;text-align:left;}
+    body{padding-bottom:210px;}
+    .detail-inner{flex-direction:column;gap:10px;}
+    header{align-items:flex-start;}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div>
+      <p class="eyebrow">KIT DE ELECTRÓNICA · NODEMCU ESP32</p>
+      <h1>Mapa de pines interactivo</h1>
+      <p class="sub">Tocá cualquier pin para ver qué hace, o pasá a modo Quiz para ponerlo a prueba.</p>
+    </div>
+    <div class="modeswitch">
+      <button id="btnExplore" class="active">Explorar</button>
+      <button id="btnQuiz">Quiz</button>
+    </div>
+  </header>
+
+  <div class="legend" id="legend"></div>
+
+  <div class="quizbar" id="quizbar">
+    <div id="quizStart" class="quiz-start">
+      <p>10 preguntas al azar. Te vamos a nombrar una función (por ejemplo "I2C SDA") y vos tocás el pin correspondiente en el diagrama.</p>
+      <button id="startQuizBtn">Empezar quiz</button>
+    </div>
+
+    <div id="quizPlay" style="display:none;">
+      <div class="quiz-meta">
+        <span id="quizProgressLabel">Pregunta 1 de 10</span>
+        <span class="score" id="quizScoreLabel">Aciertos: 0</span>
+      </div>
+      <div class="quiz-progress"><div class="quiz-progress-fill" id="quizProgressFill"></div></div>
+      <p class="quiz-question" id="quizQuestion">—</p>
+      <p class="quiz-hint">Tocá el pin del diagrama que corresponda.</p>
+      <div class="quiz-feedback" id="quizFeedback">
+        <span id="quizFeedbackText"></span>
+        <button id="nextQuestionBtn">Siguiente →</button>
+      </div>
+    </div>
+
+    <div id="quizResult" class="quiz-result">
+      <p class="big" id="quizResultScore">0 / 10</p>
+      <p id="quizResultMsg">¡Buen intento!</p>
+      <button id="retryQuizBtn">Volver a intentar</button>
+    </div>
+  </div>
+
+  <div class="board">
+    <div class="col left" id="colLeft"></div>
+    <div class="chipcenter">
+      <div class="label">ESP-WROOM-32</div>
+      <div class="dot-row"><span></span><span></span><span></span><span></span><span></span></div>
+      <div class="sub2">Wi-Fi 802.11 b/g/n · Bluetooth · doble núcleo 240&nbsp;MHz</div>
+    </div>
+    <div class="col right" id="colRight"></div>
+  </div>
+</div>
+
+<div class="detail empty" id="detail">
+  <div class="detail-inner">
+    <div class="detail-badge" id="detailBadge">—</div>
+    <div class="detail-body">
+      <p class="cat" id="detailCat">NINGÚN PIN SELECCIONADO</p>
+      <h3 id="detailTitle">Elegí un pin del diagrama</h3>
+      <p id="detailDesc">La descripción de cada pin va a aparecer acá, con su función y recomendaciones de uso.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const CATS = {
+  power: {label:'Alimentación', color:'var(--c-power)'},
+  gnd:   {label:'Tierra (GND)', color:'var(--c-gnd)'},
+  adc:   {label:'ADC', color:'var(--c-adc)'},
+  dac:   {label:'DAC', color:'var(--c-dac)'},
+  touch: {label:'Touch', color:'var(--c-touch)'},
+  uart:  {label:'UART', color:'var(--c-uart)'},
+  i2c:   {label:'I2C', color:'var(--c-i2c)'},
+  spi:   {label:'SPI (VSPI)', color:'var(--c-spi)'},
+  flash: {label:'Flash — no usar', color:'var(--c-flash)'},
+};
+
+// side: L = columna izquierda (pines 1-19), R = columna derecha (pines 38-20)
+const PINS = [
+  {n:1,  side:'L', name:'3.3V',  tags:'POWER',          cat:'power', title:'3.3 V — Salida regulada', desc:'Entrega 3.3 V regulados desde la placa. Ideal para alimentar sensores y módulos externos de bajo consumo.', quiz:'la salida de 3.3 V'},
+  {n:2,  side:'L', name:'EN',    tags:'RESET / ENABLE', cat:'power', title:'EN — Enable / Reset', desc:'Habilita el chip. Ponerlo en bajo reinicia la ESP32; el botón físico "Reset" de la placa actúa sobre este pin.', quiz:'el pin de Enable / Reset'},
+  {n:3,  side:'L', name:'GPIO36',tags:'ADC0',           cat:'adc',   title:'GPIO36 · ADC0', desc:'Entrada analógica del grupo ADC1 (12 bits, 0–4095). Disponible incluso con Wi-Fi activo. Solo entrada, sin resistencias internas.', quiz:'ADC0'},
+  {n:4,  side:'L', name:'GPIO39',tags:'ADC3',           cat:'adc',   title:'GPIO39 · ADC3', desc:'Entrada analógica del grupo ADC1. Solo entrada (input-only), no tiene pull-up/pull-down interno.', quiz:'ADC3'},
+  {n:5,  side:'L', name:'GPIO34',tags:'ADC6',           cat:'adc',   title:'GPIO34 · ADC6', desc:'Entrada analógica del grupo ADC1. Solo entrada, ideal para potenciómetros o sensores de nivel.', quiz:'ADC6'},
+  {n:6,  side:'L', name:'GPIO35',tags:'ADC7',           cat:'adc',   title:'GPIO35 · ADC7', desc:'Entrada analógica del grupo ADC1. Solo entrada, sin resistencias internas de pull-up/pull-down.', quiz:'ADC7'},
+  {n:7,  side:'L', name:'GPIO32',tags:'ADC4 · TOUCH9',  cat:'touch', title:'GPIO32 · ADC4 · Touch9', desc:'Pin multifunción: sirve como entrada analógica (ADC1) o como sensor táctil capacitivo (Touch9).', quiz:'Touch9'},
+  {n:8,  side:'L', name:'GPIO33',tags:'ADC5 · TOUCH8',  cat:'touch', title:'GPIO33 · ADC5 · Touch8', desc:'Pin multifunción: entrada analógica (ADC1) o sensor táctil capacitivo (Touch8).', quiz:'Touch8'},
+  {n:9,  side:'L', name:'GPIO25',tags:'ADC18 · DAC1',   cat:'dac',   title:'GPIO25 · DAC1', desc:'Salida analógica real de 8 bits (256 niveles, 0–3.3 V). También funciona como entrada ADC2.', quiz:'DAC1'},
+  {n:10, side:'L', name:'GPIO26',tags:'ADC19 · DAC2',   cat:'dac',   title:'GPIO26 · DAC2', desc:'Segunda salida analógica real de 8 bits. También funciona como entrada ADC2.', quiz:'DAC2'},
+  {n:11, side:'L', name:'GPIO27',tags:'ADC17 · TOUCH7', cat:'touch', title:'GPIO27 · ADC17 · Touch7', desc:'Pin multifunción: entrada analógica (ADC2, no disponible con Wi-Fi activo) o sensor táctil (Touch7).', quiz:'Touch7'},
+  {n:12, side:'L', name:'GPIO14',tags:'ADC16 · TOUCH6', cat:'touch', title:'GPIO14 · ADC16 · Touch6', desc:'Pin multifunción: entrada analógica (ADC2) o sensor táctil (Touch6). Es también un strapping pin de arranque.', quiz:'Touch6'},
+  {n:13, side:'L', name:'GPIO12',tags:'ADC15 · TOUCH5', cat:'touch', title:'GPIO12 · ADC15 · Touch5', desc:'Pin multifunción: entrada analógica (ADC2) o sensor táctil (Touch5). Strapping pin: evitar salida en alto al arrancar.', quiz:'Touch5'},
+  {n:14, side:'L', name:'GND',   tags:'TIERRA',         cat:'gnd',   title:'GND — Tierra', desc:'Referencia de 0 V (masa). Hay varios pines GND repartidos en la placa; todos son equivalentes entre sí.', quiz:'un pin de GND (tierra)'},
+  {n:15, side:'L', name:'GPIO13',tags:'ADC14 · TOUCH4', cat:'touch', title:'GPIO13 · ADC14 · Touch4', desc:'Pin multifunción: entrada analógica (ADC2) o sensor táctil (Touch4).', quiz:'Touch4'},
+  {n:16, side:'L', name:'GPIO9', tags:'FLASH D2 · RX1', cat:'flash', title:'GPIO9 · Flash D2 / RX1', desc:'Conectado internamente a la memoria Flash SPI. Evitar su uso: la placa puede no arrancar si se ocupa.', quiz:'Flash D2'},
+  {n:17, side:'L', name:'GPIO10',tags:'FLASH D3 · TX1', cat:'flash', title:'GPIO10 · Flash D3 / TX1', desc:'Conectado internamente a la memoria Flash SPI. Evitar su uso como GPIO general.', quiz:'Flash D3'},
+  {n:18, side:'L', name:'GPIO11',tags:'FLASH CMD',      cat:'flash', title:'GPIO11 · Flash CMD', desc:'Línea de comando de la memoria Flash interna. No usar para sensores ni actuadores.', quiz:'Flash CMD'},
+  {n:19, side:'L', name:'VIN 5V',tags:'ALIMENTACIÓN',   cat:'power', title:'VIN / 5V — Entrada de alimentación', desc:'Entrada de 5 V externos (batería o fuente), previa al regulador interno que genera los 3.3 V de la placa.', quiz:'la entrada VIN de 5 V'},
+
+  {n:38, side:'R', name:'GND',   tags:'TIERRA',         cat:'gnd',   title:'GND — Tierra', desc:'Referencia de 0 V (masa). Hay varios pines GND repartidos en la placa; todos son equivalentes entre sí.', quiz:'un pin de GND (tierra)'},
+  {n:37, side:'R', name:'GPIO23',tags:'VSPI MOSI',      cat:'spi',   title:'GPIO23 · VSPI MOSI', desc:'Master Out / Slave In del bus SPI: por acá la ESP32 envía datos al periférico (pantallas, SD, etc.).', quiz:'VSPI MOSI'},
+  {n:36, side:'R', name:'GPIO22',tags:'I2C SCL',        cat:'i2c',   title:'GPIO22 · I2C SCL', desc:'Línea de reloj (clock) por defecto del bus I2C, usada para sincronizar sensores y pantallas.', quiz:'I2C SCL'},
+  {n:35, side:'R', name:'GPIO1', tags:'TX0',            cat:'uart',  title:'GPIO1 · TX0', desc:'Transmisión del puerto serie principal (UART0), conectado al chip USB-UART. Lo usa el Monitor Serie.', quiz:'TX0'},
+  {n:34, side:'R', name:'GPIO3', tags:'RX0',            cat:'uart',  title:'GPIO3 · RX0', desc:'Recepción del puerto serie principal (UART0), conectado al chip USB-UART.', quiz:'RX0'},
+  {n:33, side:'R', name:'GPIO21',tags:'I2C SDA',        cat:'i2c',   title:'GPIO21 · I2C SDA', desc:'Línea de datos por defecto del bus I2C, comparte información con sensores y pantallas.', quiz:'I2C SDA'},
+  {n:32, side:'R', name:'GND',   tags:'TIERRA',         cat:'gnd',   title:'GND — Tierra', desc:'Referencia de 0 V (masa). Hay varios pines GND repartidos en la placa; todos son equivalentes entre sí.', quiz:'un pin de GND (tierra)'},
+  {n:31, side:'R', name:'GPIO19',tags:'VSPI MISO',      cat:'spi',   title:'GPIO19 · VSPI MISO', desc:'Master In / Slave Out del bus SPI: por acá el periférico le envía datos a la ESP32.', quiz:'VSPI MISO'},
+  {n:30, side:'R', name:'GPIO18',tags:'VSPI SCK',       cat:'spi',   title:'GPIO18 · VSPI SCK', desc:'Señal de reloj del bus SPI, sincroniza cada transferencia de datos.', quiz:'VSPI SCK'},
+  {n:29, side:'R', name:'GPIO5', tags:'VSPI SS',        cat:'spi',   title:'GPIO5 · VSPI SS', desc:'Slave Select del bus SPI: elige qué periférico "escucha" en un bus con varios dispositivos.', quiz:'VSPI SS'},
+  {n:28, side:'R', name:'GPIO17',tags:'TX2',            cat:'uart',  title:'GPIO17 · TX2', desc:'Transmisión del puerto serie UART2, libre para conectar módulos seriales externos.', quiz:'TX2'},
+  {n:27, side:'R', name:'GPIO16',tags:'RX2',            cat:'uart',  title:'GPIO16 · RX2', desc:'Recepción del puerto serie UART2, libre para conectar módulos seriales externos.', quiz:'RX2'},
+  {n:26, side:'R', name:'GPIO4', tags:'ADC10 · TOUCH0', cat:'touch', title:'GPIO4 · ADC10 · Touch0', desc:'Pin multifunción: entrada analógica (ADC2) o sensor táctil (Touch0).', quiz:'Touch0'},
+  {n:25, side:'R', name:'GPIO0', tags:'ADC11 · TOUCH1', cat:'touch', title:'GPIO0 · ADC11 · Touch1', desc:'Strapping pin: define el modo de arranque (boot/flash). Evitar usarlo como salida controlada al encender.', quiz:'Touch1'},
+  {n:24, side:'R', name:'GPIO2', tags:'ADC12 · TOUCH2', cat:'touch', title:'GPIO2 · ADC12 · Touch2', desc:'Strapping pin, además suele estar conectado al LED integrado de la placa. Usar con cuidado en el arranque.', quiz:'Touch2'},
+  {n:23, side:'R', name:'GPIO15',tags:'ADC13 · TOUCH3', cat:'touch', title:'GPIO15 · ADC13 · Touch3', desc:'Strapping pin: influye en los mensajes de arranque por consola. Pin multifunción con ADC y Touch.', quiz:'Touch3'},
+  {n:22, side:'R', name:'GPIO8', tags:'FLASH D1',       cat:'flash', title:'GPIO8 · Flash D1', desc:'Conectado internamente a la memoria Flash SPI. Evitar su uso: puede impedir que la placa arranque.', quiz:'Flash D1'},
+  {n:21, side:'R', name:'GPIO7', tags:'FLASH D0',       cat:'flash', title:'GPIO7 · Flash D0', desc:'Conectado internamente a la memoria Flash SPI. No usar para sensores ni actuadores.', quiz:'Flash D0'},
+  {n:20, side:'R', name:'GPIO6', tags:'FLASH CK',       cat:'flash', title:'GPIO6 · Flash CK', desc:'Reloj de la memoria Flash interna. Reservado: nunca lo conectes a nada externo.', quiz:'Flash CK'},
+];
+
+const legend = document.getElementById('legend');
+const colLeft = document.getElementById('colLeft');
+const colRight = document.getElementById('colRight');
+const detail = document.getElementById('detail');
+const detailBadge = document.getElementById('detailBadge');
+const detailCat = document.getElementById('detailCat');
+const detailTitle = document.getElementById('detailTitle');
+const detailDesc = document.getElementById('detailDesc');
+
+let activeFilter = null;
+let activePin = null;
+let mode = 'explore';
+
+// build legend chips
+Object.entries(CATS).forEach(([key, c]) => {
+  const chip = document.createElement('div');
+  chip.className = 'chip';
+  chip.dataset.cat = key;
+  chip.innerHTML = '<span class="dot" style="background:' + c.color + '"></span>' + c.label;
+  chip.addEventListener('click', () => {
+    activeFilter = (activeFilter === key) ? null : key;
+    render();
+  });
+  legend.appendChild(chip);
+});
+
+function pinRow(p){
+  const row = document.createElement('div');
+  row.className = 'pin';
+  row.dataset.n = p.n;
+  row.style.setProperty('--pin-color', CATS[p.cat].color);
+  row.innerHTML =
+    '<div class="num">' + p.n + '</div>' +
+    '<div class="swatch"></div>' +
+    '<div class="names">' +
+      '<div class="primary">' + p.name + '</div>' +
+      '<div class="tags">' + p.tags + '</div>' +
+    '</div>';
+  row.addEventListener('click', () => onPinClick(p, row));
+  return row;
+}
+
+function onPinClick(p, row){
+  if(mode === 'explore'){
+    activePin = (activePin && activePin.n === p.n) ? null : p;
+    render();
+  } else if(mode === 'quiz'){
+    handleQuizAnswer(p, row);
+  }
+}
+
+// left column: pins 1-19 in order; right column: pins 38 down to 20
+const leftPins = PINS.filter(p => p.side === 'L').sort((a,b)=>a.n-b.n);
+const rightPins = PINS.filter(p => p.side === 'R').sort((a,b)=>b.n-a.n);
+leftPins.forEach(p => colLeft.appendChild(pinRow(p)));
+rightPins.forEach(p => colRight.appendChild(pinRow(p)));
+
+function render(){
+  legend.querySelectorAll('.chip').forEach(chip => {
+    const key = chip.dataset.cat;
+    chip.classList.toggle('active', activeFilter === key);
+    chip.classList.toggle('dimmed', activeFilter && activeFilter !== key);
+  });
+  document.querySelectorAll('.pin').forEach(row => {
+    const n = Number(row.dataset.n);
+    const p = PINS.find(pp => pp.n === n);
+    const matchesFilter = !activeFilter || p.cat === activeFilter;
+    row.classList.toggle('dimmed', !matchesFilter);
+    row.classList.toggle('selected', activePin && activePin.n === n);
+  });
+  if(activePin){
+    const c = CATS[activePin.cat];
+    detail.classList.remove('empty');
+    detailBadge.style.background = c.color;
+    detailBadge.textContent = activePin.n;
+    detailCat.textContent = c.label.toUpperCase() + ' · PIN ' + activePin.n;
+    detailCat.style.color = c.color;
+    detailTitle.textContent = activePin.title;
+    detailDesc.textContent = activePin.desc;
+  } else {
+    detail.classList.add('empty');
+    detailBadge.style.background = '';
+    detailBadge.textContent = '—';
+    detailCat.textContent = 'NINGÚN PIN SELECCIONADO';
+    detailCat.style.color = '';
+    detailTitle.textContent = 'Elegí un pin del diagrama';
+    detailDesc.textContent = 'La descripción de cada pin va a aparecer acá, con su función y recomendaciones de uso.';
+  }
+}
+
+// ---------- mode switching ----------
+const btnExplore = document.getElementById('btnExplore');
+const btnQuiz = document.getElementById('btnQuiz');
+const quizbar = document.getElementById('quizbar');
+
+btnExplore.addEventListener('click', () => setMode('explore'));
+btnQuiz.addEventListener('click', () => setMode('quiz'));
+
+function setMode(m){
+  mode = m;
+  document.body.classList.toggle('quiz-mode', m === 'quiz');
+  btnExplore.classList.toggle('active', m === 'explore');
+  btnQuiz.classList.toggle('active', m === 'quiz');
+  quizbar.classList.toggle('visible', m === 'quiz');
+  activeFilter = null;
+  activePin = null;
+  document.querySelectorAll('.pin').forEach(row => row.classList.remove('correct','incorrect'));
+  if(m === 'quiz'){ resetQuizToStart(); }
+  render();
+}
+
+// ---------- quiz logic ----------
+const quizStart = document.getElementById('quizStart');
+const quizPlay = document.getElementById('quizPlay');
+const quizResult = document.getElementById('quizResult');
+const startQuizBtn = document.getElementById('startQuizBtn');
+const nextQuestionBtn = document.getElementById('nextQuestionBtn');
+const retryQuizBtn = document.getElementById('retryQuizBtn');
+const quizProgressLabel = document.getElementById('quizProgressLabel');
+const quizScoreLabel = document.getElementById('quizScoreLabel');
+const quizProgressFill = document.getElementById('quizProgressFill');
+const quizQuestionEl = document.getElementById('quizQuestion');
+const quizFeedback = document.getElementById('quizFeedback');
+const quizFeedbackText = document.getElementById('quizFeedbackText');
+const quizResultScore = document.getElementById('quizResultScore');
+const quizResultMsg = document.getElementById('quizResultMsg');
+
+const QUIZ_LENGTH = 10;
+let quizQueue = [];
+let quizIndex = 0;
+let quizScore = 0;
+let answered = false;
+
+function resetQuizToStart(){
+  quizStart.style.display = 'block';
+  quizPlay.style.display = 'none';
+  quizResult.classList.remove('show');
+}
+
+function buildQuizQueue(){
+  const shuffled = [...PINS].sort(() => Math.random() - 0.5);
+  quizQueue = shuffled.slice(0, QUIZ_LENGTH);
+  quizIndex = 0;
+  quizScore = 0;
+}
+
+startQuizBtn.addEventListener('click', () => {
+  buildQuizQueue();
+  quizStart.style.display = 'none';
+  quizPlay.style.display = 'block';
+  showQuestion();
+});
+
+retryQuizBtn.addEventListener('click', () => {
+  buildQuizQueue();
+  quizResult.classList.remove('show');
+  quizPlay.style.display = 'block';
+  showQuestion();
+});
+
+nextQuestionBtn.addEventListener('click', () => {
+  quizIndex++;
+  if(quizIndex >= quizQueue.length){
+    showResult();
+  } else {
+    showQuestion();
+  }
+});
+
+function showQuestion(){
+  answered = false;
+  document.querySelectorAll('.pin').forEach(row => row.classList.remove('correct','incorrect'));
+  quizFeedback.classList.remove('show','good','bad');
+  const q = quizQueue[quizIndex];
+  quizProgressLabel.textContent = 'Pregunta ' + (quizIndex + 1) + ' de ' + quizQueue.length;
+  quizScoreLabel.textContent = 'Aciertos: ' + quizScore;
+  quizProgressFill.style.width = ((quizIndex) / quizQueue.length * 100) + '%';
+  quizQuestionEl.textContent = 'Encontrá ' + q.quiz;
+}
+
+function handleQuizAnswer(p, row){
+  if(answered) return;
+  answered = true;
+  const q = quizQueue[quizIndex];
+  const isCorrect = p.tags === q.tags;
+  if(isCorrect){
+    quizScore++;
+    row.classList.add('correct');
+    quizFeedback.classList.add('show','good');
+    quizFeedbackText.textContent = '¡Correcto! Pin ' + p.n + ' — ' + p.name;
+  } else {
+    row.classList.add('incorrect');
+    document.querySelectorAll('.pin').forEach(r => {
+      const n = Number(r.dataset.n);
+      const pp = PINS.find(x => x.n === n);
+      if(pp.tags === q.tags) r.classList.add('correct');
+    });
+    quizFeedback.classList.add('show','bad');
+    quizFeedbackText.textContent = 'No era ese. Buscabas ' + q.quiz + '.';
+  }
+  quizScoreLabel.textContent = 'Aciertos: ' + quizScore;
+  quizProgressFill.style.width = ((quizIndex + 1) / quizQueue.length * 100) + '%';
+}
+
+function showResult(){
+  quizPlay.style.display = 'none';
+  quizResult.classList.add('show');
+  quizResultScore.textContent = quizScore + ' / ' + quizQueue.length;
+  let msg = '¡Excelente! Ya conocés la placa de memoria.';
+  if(quizScore < quizQueue.length * 0.5) msg = 'Vale la pena repasar el diagrama de nuevo en modo Explorar.';
+  else if(quizScore < quizQueue.length * 0.8) msg = 'Bien, pero todavía hay algunos pines para repasar.';
+  quizResultMsg.textContent = msg;
+}
+
+render();
+</script>
+</body>
+</html>
