@@ -9,12 +9,12 @@
       --bg: #0b1e17;
       --panel: #112d22;
       --panel-hover: #173b2d;
-      --panel-selected: #1e4d3b;
+      --panel-selected: #1b4b38;
       --border: #235843;
       --text-main: #f0f6f3;
       --text-muted: #8ea89d;
       --copper: #e29b47;
-      --copper-glow: rgba(226, 155, 71, 0.4);
+      --copper-glow: rgba(226, 155, 71, 0.45);
 
       /* Categorías funcionales */
       --c-power: #f39c12;
@@ -40,12 +40,12 @@
     }
 
     .wrap {
-      max-width: 1200px;
+      max-width: 1300px;
       margin: 0 auto;
     }
 
     header {
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       text-align: center;
     }
     .badge-sub {
@@ -56,13 +56,13 @@
       text-transform: uppercase;
     }
     h1 {
-      margin: 6px 0 10px;
-      font-size: clamp(24px, 4vw, 36px);
+      margin: 6px 0 8px;
+      font-size: clamp(22px, 3.5vw, 34px);
       letter-spacing: -0.5px;
     }
     .desc {
       color: var(--text-muted);
-      font-size: 15px;
+      font-size: 14.5px;
       max-width: 650px;
       margin: 0 auto;
     }
@@ -73,13 +73,13 @@
       flex-wrap: wrap;
       gap: 8px;
       justify-content: center;
-      margin-bottom: 28px;
+      margin-bottom: 24px;
     }
     .chip {
       display: inline-flex;
       align-items: center;
       gap: 7px;
-      padding: 6px 12px;
+      padding: 5px 12px;
       border-radius: 20px;
       font-size: 12px;
       font-weight: 500;
@@ -102,74 +102,117 @@
     }
     .chip.dimmed { opacity: 0.35; }
 
-    /* Contenedor principal alineado mediante Grid */
+    /* Escenario central */
     .pinout-stage {
       display: grid;
-      grid-template-columns: 1fr 280px 1fr;
-      gap: 16px;
+      grid-template-columns: 1fr 420px 1fr; /* Imagen ancha y proporcional */
+      gap: 0;
       align-items: center;
-      max-width: 1100px;
+      max-width: 1240px;
       margin: 0 auto;
     }
 
-    /* 19 filas idénticas para garantizar coincidencia milimétrica con la placa */
+    /* 19 filas de altura idéntica */
     .col {
       display: grid;
       grid-template-rows: repeat(19, 44px);
-      gap: 6px;
-    }
-    .col.right .pin-btn {
-      flex-direction: row-reverse;
-      text-align: right;
+      gap: 5px;
     }
 
     .board-center {
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100%;
+      padding: 0 10px;
     }
     .board-center img {
       width: 100%;
-      height: calc(19 * 44px + 18 * 6px); /* Altura exacta de las 19 filas de pines */
-      object-fit: fill; /* Hace calzar cada orificio metálico con su respectivo botón */
+      max-width: 400px;
+      height: calc(19 * 44px + 18 * 5px); /* Calza exacto con el alto de la columna */
+      object-fit: contain; /* Proporciones reales intactas: no se deforma ni estira */
       display: block;
-      filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.7));
-      border-radius: 6px;
+      filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.75));
     }
 
-    /* Filas de Pines */
+    /* Botón contenedor del pin + línea conectora */
     .pin-btn {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 0 10px;
       height: 44px;
-      border-radius: 8px;
-      background: rgba(17, 45, 34, 0.75);
-      border: 1px solid rgba(35, 88, 67, 0.7);
       cursor: pointer;
-      transition: background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
       color: inherit;
+      position: relative;
     }
-    .pin-btn:hover {
+
+    /* Tarjeta del pin */
+    .pin-card {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 10px;
+      height: 100%;
+      flex: 1;
+      border-radius: 8px;
+      background: rgba(17, 45, 34, 0.85);
+      border: 1px solid rgba(35, 88, 67, 0.85);
+      transition: all 0.12s ease;
+    }
+    .pin-btn:hover .pin-card {
       background: var(--panel-hover);
       border-color: var(--copper);
     }
-    .pin-btn.selected {
+    .pin-btn.selected .pin-card {
       background: var(--panel-selected);
       border-color: var(--copper);
       box-shadow: 0 0 12px var(--copper-glow);
     }
-    .pin-btn.dimmed { opacity: 0.25; }
+    .pin-btn.dimmed { opacity: 0.22; }
+
+    /* Flecha / Línea guía conectora */
+    .pin-arrow {
+      width: 28px;
+      height: 2px;
+      background: var(--border);
+      position: relative;
+      flex: none;
+      transition: all 0.12s ease;
+    }
+    /* Extremo conector que toca el pin */
+    .pin-arrow::after {
+      content: '';
+      position: absolute;
+      top: -3px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: all 0.12s ease;
+    }
+    /* Orientación izquierda */
+    .col.left .pin-arrow::after { right: -4px; }
+    /* Orientación derecha */
+    .col.right .pin-btn { flex-direction: row-reverse; }
+    .col.right .pin-card { flex-direction: row-reverse; text-align: right; }
+    .col.right .pin-arrow::after { left: -4px; }
+
+    /* Estado activo de la flecha / conector */
+    .pin-btn:hover .pin-arrow,
+    .pin-btn.selected .pin-arrow {
+      background: var(--copper);
+    }
+    .pin-btn:hover .pin-arrow::after,
+    .pin-btn.selected .pin-arrow::after {
+      background: var(--copper);
+      box-shadow: 0 0 8px var(--copper);
+    }
 
     .pin-num {
-      width: 22px;
+      width: 24px;
       height: 22px;
-      background: #1e3a2f;
+      background: #1b382d;
       border: 1px solid var(--border);
       border-radius: 4px;
-      font-size: 11px;
+      font-size: 10.5px;
       font-family: monospace;
       display: flex;
       align-items: center;
@@ -185,10 +228,10 @@
       font-weight: 700;
       font-size: 13px;
       font-family: "SFMono-Regular", Consolas, monospace;
-      line-height: 1.2;
+      line-height: 1.15;
     }
     .pin-tags {
-      font-size: 10px;
+      font-size: 9.5px;
       color: var(--text-muted);
       white-space: nowrap;
       overflow: hidden;
@@ -196,9 +239,9 @@
       line-height: 1.2;
     }
     .pin-bar {
-      width: 5px;
-      height: 24px;
-      border-radius: 3px;
+      width: 4px;
+      height: 22px;
+      border-radius: 2px;
       flex: none;
       background: var(--p-color, var(--border));
     }
@@ -209,24 +252,24 @@
       bottom: 0;
       left: 0;
       right: 0;
-      background: rgba(14, 38, 29, 0.96);
+      background: rgba(13, 35, 27, 0.97);
       backdrop-filter: blur(10px);
       border-top: 1px solid var(--border);
-      padding: 16px 20px;
-      box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.5);
+      padding: 14px 20px;
+      box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.55);
       z-index: 100;
     }
     .info-inner {
-      max-width: 1100px;
+      max-width: 1200px;
       margin: 0 auto;
       display: flex;
-      gap: 20px;
+      gap: 18px;
       align-items: center;
     }
     .info-badge {
-      width: 58px;
-      height: 58px;
-      border-radius: 12px;
+      width: 54px;
+      height: 54px;
+      border-radius: 10px;
       background: var(--panel);
       border: 2px solid var(--border);
       display: flex;
@@ -238,18 +281,18 @@
       font-weight: bold;
     }
     .info-badge .b-sub { font-size: 9px; opacity: 0.7; }
-    .info-badge .b-main { font-size: 16px; }
+    .info-badge .b-main { font-size: 15px; }
 
     .info-content { flex: 1; }
     .info-header {
       display: flex;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 4px;
+      gap: 10px;
+      margin-bottom: 3px;
       flex-wrap: wrap;
     }
     .info-title {
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 700;
       margin: 0;
     }
@@ -263,8 +306,8 @@
     }
     .info-text {
       margin: 0;
-      font-size: 14px;
-      line-height: 1.45;
+      font-size: 13.5px;
+      line-height: 1.4;
       color: #dbe7e1;
     }
     .warning-box {
@@ -272,12 +315,13 @@
       font-weight: 600;
     }
 
-    @media (max-width: 860px) {
+    @media (max-width: 960px) {
       .pinout-stage { grid-template-columns: 1fr; }
       .board-center { order: -1; margin-bottom: 20px; }
-      .board-center img { height: auto; max-width: 260px; object-fit: contain; }
+      .board-center img { height: auto; max-width: 280px; }
       .col { grid-template-rows: auto; }
-      .col.right .pin-btn { flex-direction: row; text-align: left; }
+      .pin-arrow { display: none; }
+      .col.right .pin-btn, .col.right .pin-card { flex-direction: row; text-align: left; }
       .info-inner { flex-direction: column; align-items: flex-start; gap: 8px; }
       .info-badge { display: none; }
     }
@@ -289,7 +333,7 @@
   <header>
     <p class="badge-sub">Espressif · ESP32-WROOM-32 (38 Pines)</p>
     <h1>Pinout e Información de Hardware</h1>
-    <p class="desc">Selecciona cualquier categoría para filtrar pines o toca sobre un pin para ver sus funciones especiales, compatibilidad con Wi-Fi y advertencias de arranque (boot strapping).</p>
+    <p class="desc">Filtra por categorías arriba o haz clic sobre cualquier pin para ver sus conexiones, buses compatibles y alertas técnicas.</p>
   </header>
 
   <div class="legend" id="legend"></div>
@@ -312,7 +356,7 @@
     <div class="info-content">
       <div class="info-header">
         <h3 class="info-title" id="infoTitle">Selecciona un pin del circuito</h3>
-        <span class="info-tag" id="infoCategory">GUÍA RÁPIDA</span>
+        <span class="info-tag" id="infoCategory">CONSULTA TÉCNICA</span>
       </div>
       <p class="info-text" id="infoDesc">Haz clic en cualquiera de los 38 terminales para revisar su mapeo GPIO, canales analógicos (ADC/DAC), buses de comunicación y recomendaciones de conexión.</p>
     </div>
@@ -334,7 +378,7 @@ const CATS = {
 };
 
 const PINS = [
-  // --- LADO IZQUIERDO (de arriba a abajo: 1 al 19) ---
+  // --- LADO IZQUIERDO (1 al 19) ---
   { pos: 1,  side: 'L', silk: '3V3',  name: '3.3V',    cat: 'power', tags: 'ALIMENTACIÓN',
     title: '3.3 V — Salida Regulada',
     desc: 'Salida de 3.3 V provista por el regulador integrado. Útil para alimentar sensores, transceptores y circuitos lógicos de bajo consumo (típ. máx. 500-600 mA).' },
@@ -411,7 +455,7 @@ const PINS = [
     title: '5V / VIN — Entrada de Alimentación',
     desc: 'Alimentación principal (5 V) previa al regulador LDO. Conectada a los 5 V del conector Micro-USB o apta para alimentar con fuente externa regulada.' },
 
-  // --- LADO DERECHO (de arriba a abajo: 20 al 38) ---
+  // --- LADO DERECHO (20 al 38) ---
   { pos: 20, side: 'R', silk: 'GND',  name: 'GND',     cat: 'gnd',   tags: 'TIERRA / 0V',
     title: 'GND — Masa Superior',
     desc: 'Referencia común de masa de la placa.' },
@@ -515,12 +559,15 @@ function createPinElement(pin) {
   btn.style.setProperty('--p-color', CATS[pin.cat].color);
 
   btn.innerHTML = `
-    <div class="pin-num">${pin.silk}</div>
-    <div class="pin-bar"></div>
-    <div class="pin-label-box">
-      <div class="pin-label">${pin.name}</div>
-      <div class="pin-tags">${pin.tags}</div>
+    <div class="pin-card">
+      <div class="pin-num">${pin.silk}</div>
+      <div class="pin-bar"></div>
+      <div class="pin-label-box">
+        <div class="pin-label">${pin.name}</div>
+        <div class="pin-tags">${pin.tags}</div>
+      </div>
     </div>
+    <div class="pin-arrow"></div>
   `;
 
   btn.addEventListener('click', () => selectPin(pin));
