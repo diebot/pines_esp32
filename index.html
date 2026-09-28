@@ -199,17 +199,24 @@
   .info-text { font-size: 13px; line-height: 1.45; color: #dbe7e1; }
   .info-warn { font-size: 13px; font-weight: 600; margin-top: 3px; }
   .codebox {
-    flex: 0 1 380px; position: relative;
+    flex: 0 1 470px; position: relative;
     background: #0a1913; border: 1px solid var(--border); border-radius: 8px;
     padding: 9px 10px;
   }
-  .codebox pre { font: 12px/1.5 "SFMono-Regular", Consolas, monospace; white-space: pre-wrap; color: #cfe8dc; padding-right: 66px; }
+  .codebox pre { font: 12px/1.5 "SFMono-Regular", Consolas, monospace; white-space: pre-wrap; color: #cfe8dc; max-height: 170px; overflow: auto; }
   .copy {
     position: absolute; top: 6px; right: 6px;
     font-size: 11px; padding: 3px 9px; border-radius: 5px; cursor: pointer;
     background: var(--panel-selected); color: var(--text-main); border: 1px solid var(--border);
   }
   .copy:hover { border-color: var(--copper); }
+  .ex-tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; padding-right: 70px; }
+  .ex-tab {
+    font-size: 11px; padding: 2px 9px; border-radius: 12px; cursor: pointer;
+    background: transparent; color: var(--text-muted); border: 1px solid var(--border);
+  }
+  .ex-tab:hover { border-color: var(--copper); color: var(--text-main); }
+  .ex-tab.active { background: var(--panel-selected); color: var(--text-main); border-color: var(--copper); }
   .keys { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 14px; }
 
   /* Celular: misma composición que en PC (placa al centro, etiquetas a los lados), todo escalado con --bw */
@@ -278,6 +285,7 @@
       <p class="info-warn" id="infoWarn" hidden></p>
     </div>
     <div class="codebox" id="codeBox" hidden>
+      <div class="ex-tabs" id="exTabs"></div>
       <pre id="codeText"></pre>
       <button class="copy" id="copyBtn" type="button">Copiar</button>
     </div>
@@ -422,19 +430,184 @@ const RAW = [
 
 const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
-const PINS = RAW.map(([pos, silk, name, cat, tags, lvl, desc, code, warn]) => {
-  const gpio = (name.match(/^GPIO(\d+)/) || [])[1];
-  if (!code) {
-    if (lvl === 'r') code = '// Reservado para la Flash: no lo uses';
-    else if (gpio) code = `pinMode(${gpio}, OUTPUT);\ndigitalWrite(${gpio}, HIGH);`;
-    else code = '';
+const INPUT_ONLY_PINS = [34, 35, 36, 39];
+const RTC_GPIO = [0, 2, 4, 12, 13, 14, 15, 25, 26, 27, 32, 33, 34, 35, 36, 39];
+const ADC1 = [32, 33, 34, 35, 36, 39];
+const ADC2 = [0, 2, 4, 12, 13, 14, 15, 25, 26, 27];
+const TOUCH = { 4: 0, 0: 1, 2: 2, 15: 3, 13: 4, 12: 5, 14: 6, 27: 7, 33: 8, 32: 9 };
+const DAC = [25, 26];
+
+// Un ejemplo por cada función que ofrece el pin
+function buildExamples(p) {
+  const out = [];
+  const add = (t, c) => out.push({ t, c });
+  const n = p.gpio ? Number(p.gpio) : null;
+
+  if (/^EN/.test(p.name)) {
+    add('Reiniciar', `// Por hardware: llevá EN a GND un instante (botón EN)
+// Por software:
+ESP.restart();`);
+    return out;
   }
-  return {
-    pos, silk, name, cat, tags, lvl, desc, code, warn: warn || '',
+  if (n === null) return out;
+
+  if (p.lvl === 'r') {
+    add('Reservado', `// GPIO${n} está conectado a la Flash interna del módulo.
+// No lo uses como entrada, salida ni para ningún bus.`);
+    return out;
+  }
+
+  const inOnly = INPUT_ONLY_PINS.includes(n);
+
+  /* ---- Funciones propias del pin (buses, botón) ---- */
+  if (n === 21 || n === 22) {
+    add('I2C: escáner', `#include <Wire.h>
+
+Wire.begin(21, 22);   // SDA, SCL
+for (byte a = 1; a < 127; a++) {
+  Wire.beginTransmission(a);
+  if (Wire.endTransmission() == 0) {
+    Serial.printf("Dispositivo en 0x%02X\\n", a);
+  }
+}`);
+    add('I2C: leer un registro', `Wire.begin(21, 22);
+Wire.setClock(400000);          // 400 kHz (opcional)
+
+Wire.beginTransmission(0x76);   // dirección del sensor (ej. BME280)
+Wire.write(0xD0);               // registro a leer
+Wire.endTransmission(false);
+Wire.requestFrom(0x76, 1);      // pide 1 byte
+byte id = Wire.read();`);
+  }
+  if ([23, 19, 18, 5].includes(n)) {
+    add('SPI (VSPI)', `#include <SPI.h>
+
+SPI.begin(18, 19, 23, 5);   // SCK, MISO, MOSI, SS
+pinMode(5, OUTPUT);
+
+SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE0));
+digitalWrite(5, LOW);            // selecciona el dispositivo
+byte resp = SPI.transfer(0x9F);  // envía 0x9F y recibe un byte
+digitalWrite(5, HIGH);
+SPI.endTransaction();`);
+    add('SPI: microSD', `#include <SD.h>
+
+if (!SD.begin(5)) {   // CS en GPIO5; usa VSPI (18, 19, 23)
+  Serial.println("No se detecta la tarjeta");
+}`);
+  }
+  if ([14, 12, 13, 15].includes(n)) {
+    add('SPI (HSPI)', `#include <SPI.h>
+
+SPIClass hspi(HSPI);            // fuera de setup()
+
+hspi.begin(14, 12, 13, 15);     // SCK, MISO, MOSI, SS
+pinMode(15, OUTPUT);
+
+hspi.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE0));
+digitalWrite(15, LOW);
+byte resp = hspi.transfer(0x9F);
+digitalWrite(15, HIGH);
+hspi.endTransaction();`);
+  }
+  if (n === 1 || n === 3) {
+    add('Monitor serie (UART0)', `Serial.begin(115200);
+Serial.println("Hola desde el ESP32");
+Serial.printf("Valor: %d\\n", 42);
+
+if (Serial.available()) {
+  char c = Serial.read();
+}`);
+    add('Como GPIO común', `// Se puede usar como GPIO, pero perdés el monitor serie y la carga por USB.
+pinMode(${n}, OUTPUT);
+digitalWrite(${n}, HIGH);`);
+    return out;
+  }
+  if (n === 16 || n === 17) {
+    add('UART2: enviar y recibir', `Serial2.begin(9600, SERIAL_8N1, 16, 17);   // baudios, formato, RX, TX
+
+Serial2.println("AT");
+while (Serial2.available()) {
+  char c = Serial2.read();
+}`);
+    add('UART2: puente al monitor', `// Lo que llega por UART2 se ve en el monitor serie, y al revés
+if (Serial2.available()) Serial.write(Serial2.read());
+if (Serial.available())  Serial2.write(Serial.read());`);
+  }
+  if (n === 0) {
+    add('Botón BOOT', `pinMode(0, INPUT_PULLUP);   // el pulsador BOOT lo lleva a GND
+if (digitalRead(0) == LOW) {
+  // botón apretado (no lo mantengas apretado al reiniciar)
+}`);
+  }
+
+  /* ---- Funciones generales ---- */
+  if (!inOnly) {
+    add('Salida digital', `pinMode(${n}, OUTPUT);
+digitalWrite(${n}, HIGH);${n === 2 ? '   // enciende el LED azul' : ''}
+delay(500);
+digitalWrite(${n}, LOW);`);
+  }
+  add('Entrada digital', inOnly
+    ? `pinMode(${n}, INPUT);   // sin pull-up interno: agregá una resistencia externa (10 kΩ)
+int estado = digitalRead(${n});`
+    : `pinMode(${n}, INPUT_PULLUP);   // botón entre el pin y GND
+bool apretado = (digitalRead(${n}) == LOW);`);
+  add('Interrupción', `volatile bool hubo = false;
+void IRAM_ATTR isr() { hubo = true; }   // fuera de setup()
+
+pinMode(${n}, ${inOnly ? 'INPUT' : 'INPUT_PULLUP'});
+attachInterrupt(digitalPinToInterrupt(${n}), isr, FALLING);
+// en loop(): if (hubo) { hubo = false; ... }`);
+  if (!inOnly) {
+    add('PWM', `// Core ESP32 3.x
+ledcAttach(${n}, 5000, 8);   // pin, frecuencia (Hz), resolución (bits)
+ledcWrite(${n}, 128);        // ciclo de trabajo 0 a 255 (50 %)
+
+// Core 2.x:
+// ledcSetup(0, 5000, 8); ledcAttachPin(${n}, 0); ledcWrite(0, 128);`);
+  }
+  if (ADC1.includes(n) || ADC2.includes(n)) {
+    add(`ADC${ADC1.includes(n) ? 1 : 2}: lectura analógica`, `${ADC2.includes(n) ? '// ADC2: no funciona mientras el Wi-Fi está activo\n' : ''}analogSetPinAttenuation(${n}, ADC_11db);   // rango ≈ 0 a 3.3 V
+int raw = analogRead(${n});                // 0 a 4095
+int mV  = analogReadMilliVolts(${n});      // valor ya calibrado`);
+  }
+  if (n in TOUCH) {
+    const t = TOUCH[n];
+    add(`Touch (T${t})`, `int valor = touchRead(T${t});   // baja cuando apoyás el dedo
+
+void gotTouch() { /* se ejecuta al tocar */ }   // fuera de setup()
+touchAttachInterrupt(T${t}, gotTouch, 40);      // umbral: ajustalo a tu montaje`);
+    add('Despertar por toque', `touchSleepWakeUpEnable(T${t}, 40);
+esp_deep_sleep_start();`);
+  }
+  if (DAC.includes(n)) {
+    add(`DAC${n - 24}: salida analógica`, `dacWrite(${n}, 128);   // 0 a 255 equivale a 0 a 3.3 V (128 ≈ 1.65 V)
+
+// Diente de sierra
+for (int i = 0; i < 256; i++) {
+  dacWrite(${n}, i);
+  delayMicroseconds(50);
+}`);
+  }
+  if (RTC_GPIO.includes(n)) {
+    add('Despertar (sueño profundo)', `esp_sleep_enable_ext0_wakeup(GPIO_NUM_${n}, 0);   // despierta cuando el pin pasa a LOW
+esp_deep_sleep_start();${inOnly ? '\n// Solo entrada: necesita pull-up externo' : ''}`);
+  }
+  return out;
+}
+
+const PINS = RAW.map(([pos, silk, name, cat, tags, lvl, desc, , warn]) => {
+  const gpio = (name.match(/^GPIO(\d+)/) || [])[1];
+  const p = {
+    pos, silk, name, cat, tags, lvl, desc, warn: warn || '', gpio,
     side: pos <= 19 ? 'L' : 'R',
-    idx: (pos - 1) % 19,
-    hay: norm([name, silk, tags, CATS[cat].label, LVL[lvl].label, desc, warn || ''].join(' '))
+    idx: (pos - 1) % 19
   };
+  p.examples = buildExamples(p);
+  p.hay = norm([name, silk, tags, CATS[cat].label, LVL[lvl].label, desc, p.warn,
+                p.examples.map(e => e.t).join(' ')].join(' '));
+  return p;
 });
 
 const els = {};
@@ -552,8 +725,27 @@ function selectPin(p) {
   w.textContent = p.warn;
   w.style.color = l.color;
 
-  $('codeBox').hidden = !p.code;
-  $('codeText').textContent = p.code;
+  renderExamples(p);
+}
+
+function renderExamples(p) {
+  const tabs = $('exTabs');
+  tabs.innerHTML = '';
+  $('codeBox').hidden = p.examples.length === 0;
+  p.examples.forEach((ex, i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'ex-tab';
+    b.textContent = ex.t;
+    b.addEventListener('click', () => showExample(p, i));
+    tabs.appendChild(b);
+  });
+  if (p.examples.length) showExample(p, 0);
+}
+
+function showExample(p, i) {
+  [...$('exTabs').children].forEach((b, j) => b.classList.toggle('active', j === i));
+  $('codeText').textContent = p.examples[i].c;
   $('copyBtn').textContent = 'Copiar';
 }
 
