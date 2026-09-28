@@ -205,11 +205,13 @@
   align-self: start;
 }
 
-.board-img{
-  max-width: 220px;
-  height: auto;
+.board-img {
+  width: auto;
+  max-width: 380px;       /* Aumentamos el límite de ancho */
+  height: 520px;          /* Le damos una altura similar a la columna de pines */
+  object-fit: contain;    /* Mantiene las proporciones sin deformarse */
   display: block;
-  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.6));
 }
   .chipcenter .label{
     font-family:"Courier New", Consolas, monospace;
