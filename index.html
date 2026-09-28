@@ -130,19 +130,22 @@
     }
 
     /* Columnas laterales: tienen un padding vertical que las empareja con la hilera de pines */
+    /* Columnas laterales calibradas con paso fijo */
     .col {
       flex: 1;
       display: flex;
       flex-direction: column;
-      justify-content: space-between; /* Distribuye los 19 pines exactamente a lo largo del alto */
-      padding: 8px 0 30px; /* subimos el inicio 4px Compensación para la antena arriba y conector USB abajo */
+      gap: 5px; /* Distancia fija entre tarjetas */
+      padding-top: 22px; /* Alineación milimétrica del primer pin */
+      padding-bottom: 0;
+      justify-content: flex-start;
     }
 
-    /* Filas de Pines */
+    /* Filas de Pines con altura fija de paso */
     .pin-btn {
       display: flex;
       align-items: center;
-      height: 31px;
+      height: 31px; /* 31px de altura + 5px de gap = 36px por cada pin exactamente */
       cursor: pointer;
       color: inherit;
     }
