@@ -29,23 +29,22 @@
       --c-strap: #e67e22;
     }
 
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      margin: 0;
-      padding: 24px 16px 140px;
+      padding: 20px 16px 140px;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: radial-gradient(circle at 50% 10%, #15392b 0%, var(--bg) 80%);
+      background: radial-gradient(circle at 50% 10%, #15392b 0%, var(--bg) 85%);
       color: var(--text-main);
       min-height: 100vh;
     }
 
     .wrap {
-      max-width: 1300px;
+      max-width: 1380px;
       margin: 0 auto;
     }
 
     header {
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       text-align: center;
     }
     .badge-sub {
@@ -56,13 +55,13 @@
       text-transform: uppercase;
     }
     h1 {
-      margin: 6px 0 8px;
-      font-size: clamp(22px, 3.5vw, 34px);
+      margin: 4px 0 6px;
+      font-size: clamp(20px, 3.2vw, 30px);
       letter-spacing: -0.5px;
     }
     .desc {
       color: var(--text-muted);
-      font-size: 14.5px;
+      font-size: 14px;
       max-width: 650px;
       margin: 0 auto;
     }
@@ -71,17 +70,17 @@
     .legend {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 6px;
       justify-content: center;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
     .chip {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      padding: 5px 12px;
+      gap: 6px;
+      padding: 5px 11px;
       border-radius: 20px;
-      font-size: 12px;
+      font-size: 11.5px;
       font-weight: 500;
       cursor: pointer;
       background: var(--panel);
@@ -91,8 +90,8 @@
       transition: all 0.15s ease;
     }
     .chip .dot {
-      width: 9px;
-      height: 9px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
     }
     .chip:hover { border-color: var(--copper); transform: translateY(-1px); }
@@ -102,58 +101,61 @@
     }
     .chip.dimmed { opacity: 0.35; }
 
-    /* Escenario central */
+    /* ESCENARIO CALIBRADO */
+    /* La placa mide 700px de alto. Los 19 pines van exactamente del 2.5% al 96% de la altura */
     .pinout-stage {
-      display: grid;
-      grid-template-columns: 1fr 420px 1fr; /* Imagen ancha y proporcional */
-      gap: 0;
-      align-items: center;
-      max-width: 1240px;
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      max-width: 1260px;
       margin: 0 auto;
-    }
-
-    /* 19 filas de altura idéntica */
-    .col {
-      display: grid;
-      grid-template-rows: repeat(19, 44px);
-      gap: 5px;
+      height: 720px; /* Altura fija para que la proporción sea inalterable */
     }
 
     .board-center {
+      position: relative;
+      width: 360px;
+      height: 720px;
+      flex: none;
       display: flex;
       justify-content: center;
       align-items: center;
-      padding: 0 10px;
     }
     .board-center img {
       width: 100%;
-      max-width: 400px;
-      height: calc(19 * 44px + 18 * 5px); /* Calza exacto con el alto de la columna */
-      object-fit: contain; /* Proporciones reales intactas: no se deforma ni estira */
+      height: 100%;
+      object-fit: contain;
       display: block;
-      filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.75));
+      filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.8));
     }
 
-    /* Botón contenedor del pin + línea conectora */
+    /* Columnas laterales: tienen un padding vertical que las empareja con la hilera de pines */
+    .col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between; /* Distribuye los 19 pines exactamente a lo largo del alto */
+      padding: 18px 0 24px; /* Compensación para la antena arriba y conector USB abajo */
+    }
+
+    /* Filas de Pines */
     .pin-btn {
       display: flex;
       align-items: center;
-      height: 44px;
+      height: 31px;
       cursor: pointer;
       color: inherit;
-      position: relative;
     }
 
-    /* Tarjeta del pin */
     .pin-card {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 0 10px;
+      gap: 7px;
+      padding: 0 8px;
       height: 100%;
       flex: 1;
-      border-radius: 8px;
-      background: rgba(17, 45, 34, 0.85);
+      border-radius: 6px;
+      background: rgba(17, 45, 34, 0.9);
       border: 1px solid rgba(35, 88, 67, 0.85);
       transition: all 0.12s ease;
     }
@@ -164,20 +166,19 @@
     .pin-btn.selected .pin-card {
       background: var(--panel-selected);
       border-color: var(--copper);
-      box-shadow: 0 0 12px var(--copper-glow);
+      box-shadow: 0 0 10px var(--copper-glow);
     }
-    .pin-btn.dimmed { opacity: 0.22; }
+    .pin-btn.dimmed { opacity: 0.2; }
 
-    /* Flecha / Línea guía conectora */
+    /* Línea conectora recta */
     .pin-arrow {
-      width: 28px;
+      width: 32px;
       height: 2px;
       background: var(--border);
       position: relative;
       flex: none;
       transition: all 0.12s ease;
     }
-    /* Extremo conector que toca el pin */
     .pin-arrow::after {
       content: '';
       position: absolute;
@@ -188,14 +189,15 @@
       background: var(--border);
       transition: all 0.12s ease;
     }
-    /* Orientación izquierda */
-    .col.left .pin-arrow::after { right: -4px; }
-    /* Orientación derecha */
+
+    /* Alineación Izquierda / Derecha */
+    .col.left .pin-arrow::after { right: 0; }
+    
     .col.right .pin-btn { flex-direction: row-reverse; }
     .col.right .pin-card { flex-direction: row-reverse; text-align: right; }
-    .col.right .pin-arrow::after { left: -4px; }
+    .col.right .pin-arrow::after { left: 0; }
 
-    /* Estado activo de la flecha / conector */
+    /* Iluminación de línea activa */
     .pin-btn:hover .pin-arrow,
     .pin-btn.selected .pin-arrow {
       background: var(--copper);
@@ -207,12 +209,12 @@
     }
 
     .pin-num {
-      width: 24px;
-      height: 22px;
+      width: 22px;
+      height: 19px;
       background: #1b382d;
       border: 1px solid var(--border);
-      border-radius: 4px;
-      font-size: 10.5px;
+      border-radius: 3px;
+      font-size: 10px;
       font-family: monospace;
       display: flex;
       align-items: center;
@@ -223,12 +225,17 @@
     .pin-label-box {
       min-width: 0;
       flex: 1;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
     }
+    .col.right .pin-label-box { justify-content: flex-end; }
+    
     .pin-label {
       font-weight: 700;
-      font-size: 13px;
+      font-size: 12px;
       font-family: "SFMono-Regular", Consolas, monospace;
-      line-height: 1.15;
+      white-space: nowrap;
     }
     .pin-tags {
       font-size: 9.5px;
@@ -236,40 +243,39 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      line-height: 1.2;
     }
     .pin-bar {
       width: 4px;
-      height: 22px;
+      height: 18px;
       border-radius: 2px;
       flex: none;
       background: var(--p-color, var(--border));
     }
 
-    /* Panel inferior de información */
+    /* Panel inferior */
     .info-dock {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
-      background: rgba(13, 35, 27, 0.97);
+      background: rgba(13, 35, 27, 0.98);
       backdrop-filter: blur(10px);
       border-top: 1px solid var(--border);
-      padding: 14px 20px;
-      box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.55);
+      padding: 12px 20px;
+      box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.6);
       z-index: 100;
     }
     .info-inner {
       max-width: 1200px;
       margin: 0 auto;
       display: flex;
-      gap: 18px;
+      gap: 16px;
       align-items: center;
     }
     .info-badge {
-      width: 54px;
-      height: 54px;
-      border-radius: 10px;
+      width: 50px;
+      height: 50px;
+      border-radius: 8px;
       background: var(--panel);
       border: 2px solid var(--border);
       display: flex;
@@ -280,33 +286,30 @@
       font-family: monospace;
       font-weight: bold;
     }
-    .info-badge .b-sub { font-size: 9px; opacity: 0.7; }
-    .info-badge .b-main { font-size: 15px; }
+    .info-badge .b-sub { font-size: 8px; opacity: 0.7; }
+    .info-badge .b-main { font-size: 14px; }
 
     .info-content { flex: 1; }
     .info-header {
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 3px;
-      flex-wrap: wrap;
+      margin-bottom: 2px;
     }
     .info-title {
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 700;
-      margin: 0;
     }
     .info-tag {
-      font-size: 11px;
+      font-size: 10.5px;
       font-family: monospace;
-      padding: 2px 8px;
+      padding: 1px 7px;
       border-radius: 4px;
       background: rgba(255,255,255,0.1);
       color: var(--copper);
     }
     .info-text {
-      margin: 0;
-      font-size: 13.5px;
+      font-size: 13px;
       line-height: 1.4;
       color: #dbe7e1;
     }
@@ -315,14 +318,14 @@
       font-weight: 600;
     }
 
-    @media (max-width: 960px) {
-      .pinout-stage { grid-template-columns: 1fr; }
-      .board-center { order: -1; margin-bottom: 20px; }
-      .board-center img { height: auto; max-width: 280px; }
-      .col { grid-template-rows: auto; }
+    @media (max-width: 900px) {
+      .pinout-stage { flex-direction: column; height: auto; }
+      .board-center { width: 100%; height: auto; max-width: 260px; margin: 0 auto 15px; }
+      .board-center img { height: auto; }
+      .col { padding: 0; gap: 4px; }
       .pin-arrow { display: none; }
       .col.right .pin-btn, .col.right .pin-card { flex-direction: row; text-align: left; }
-      .info-inner { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .col.right .pin-label-box { justify-content: flex-start; }
       .info-badge { display: none; }
     }
   </style>
