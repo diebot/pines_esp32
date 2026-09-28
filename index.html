@@ -1,356 +1,257 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ESP32 NodeMCU (38 Pines) — Pinout Interactivo</title>
-  <style>
-    :root {
-      --bg: #0b1e17;
-      --panel: #112d22;
-      --panel-hover: #173b2d;
-      --panel-selected: #1b4b38;
-      --border: #235843;
-      --text-main: #f0f6f3;
-      --text-muted: #8ea89d;
-      --copper: #e29b47;
-      --copper-glow: rgba(226, 155, 71, 0.45);
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ESP32 NodeMCU (38 pines) — Pinout interactivo</title>
+<style>
+  :root {
+    --bg: #0b1e17;
+    --panel: #112d22;
+    --panel-hover: #173b2d;
+    --panel-selected: #1b4b38;
+    --border: #235843;
+    --text-main: #f0f6f3;
+    --text-muted: #8ea89d;
+    --copper: #e29b47;
+    --copper-glow: rgba(226, 155, 71, 0.4);
 
-      /* Categorías funcionales */
-      --c-power: #f39c12;
-      --c-gnd: #7f8c8d;
-      --c-adc: #e84393;
-      --c-dac: #9b59b6;
-      --c-touch: #2ecc71;
-      --c-uart: #3498db;
-      --c-i2c: #1abc9c;
-      --c-spi: #f1c40f;
-      --c-flash: #e74c3c;
-      --c-strap: #e67e22;
-    }
+    --c-power: #f39c12; --c-gnd: #7f8c8d; --c-adc: #e84393; --c-dac: #9b59b6;
+    --c-touch: #2ecc71; --c-uart: #3498db; --c-i2c: #1abc9c; --c-spi: #f1c40f;
+    --c-strap: #e67e22; --c-flash: #e74c3c;
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      padding: 20px 16px 140px;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: radial-gradient(circle at 50% 10%, #15392b 0%, var(--bg) 85%);
-      color: var(--text-main);
-      min-height: 100vh;
-    }
+    --l-g: #4cd98a; --l-y: #f5c542; --l-r: #ff6b5b; --l-n: #7f8c8d;
 
-    .wrap {
-      max-width: 1380px;
-      margin: 0 auto;
-    }
+    /* ===== AJUSTE DE ALINEACIÓN (tocar solo estos 3 valores) ===== */
+    --y0: 4.3%;   /* centro del primer pin de cada lado (3V3 / GND) */
+    --y1: 92.6%;  /* centro del último pin de cada lado (5V / CLK)  */
+    --hx: 18px;   /* distancia del borde de la imagen al centro del agujero del pin */
+  }
 
-    header {
-      margin-bottom: 16px;
-      text-align: center;
-    }
-    .badge-sub {
-      font-family: "SFMono-Regular", Consolas, monospace;
-      font-size: 12px;
-      letter-spacing: 2px;
-      color: var(--copper);
-      text-transform: uppercase;
-    }
-    h1 {
-      margin: 4px 0 6px;
-      font-size: clamp(20px, 3.2vw, 30px);
-      letter-spacing: -0.5px;
-    }
-    .desc {
-      color: var(--text-muted);
-      font-size: 14px;
-      max-width: 650px;
-      margin: 0 auto;
-    }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    padding: 20px 16px 230px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(circle at 50% 10%, #15392b 0%, var(--bg) 85%);
+    color: var(--text-main);
+    min-height: 100vh;
+  }
+  .wrap { max-width: 1380px; margin: 0 auto; }
 
-    /* Filtros / Leyenda */
-    .legend {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      justify-content: center;
-      margin-bottom: 20px;
-    }
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 5px 11px;
-      border-radius: 20px;
-      font-size: 11.5px;
-      font-weight: 500;
-      cursor: pointer;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      color: var(--text-main);
-      user-select: none;
-      transition: all 0.15s ease;
-    }
-    .chip .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-    }
-    .chip:hover { border-color: var(--copper); transform: translateY(-1px); }
-    .chip.active {
-      border-color: var(--copper);
-      background: var(--copper-glow);
-    }
-    .chip.dimmed { opacity: 0.35; }
+  header { margin-bottom: 14px; text-align: center; }
+  .badge-sub { font-family: "SFMono-Regular", Consolas, monospace; font-size: 12px; color: var(--copper); }
+  h1 { margin: 4px 0 6px; font-size: clamp(20px, 3.2vw, 30px); letter-spacing: -0.5px; }
+  .desc { color: var(--text-muted); font-size: 14px; max-width: 680px; margin: 0 auto; }
 
-    /* ESCENARIO CALIBRADO */
-    /* La placa mide 700px de alto. Los 19 pines van exactamente del 2.5% al 96% de la altura */
-    .pinout-stage {
-      display: flex;
-      justify-content: center;
-      align-items: stretch;
-      max-width: 1260px;
-      margin: 0 auto;
-      height: 720px; /* Altura fija para que la proporción sea inalterable */
-    }
+  /* Buscador */
+  .tools { display: flex; justify-content: center; align-items: center; gap: 12px; margin: 14px 0 10px; }
+  #search {
+    width: min(460px, 100%);
+    padding: 9px 14px;
+    border-radius: 22px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text-main);
+    font-size: 14px;
+  }
+  #search::placeholder { color: var(--text-muted); }
+  #search:focus { outline: 2px solid var(--copper); outline-offset: 1px; }
+  #count { font-size: 12px; color: var(--text-muted); min-width: 92px; }
 
-    .board-center {
-      position: relative;
-      width: 360px;
-      height: 720px;
-      flex: none;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    .board-center img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      display: block;
-      filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.8));
-    }
+  /* Filtros */
+  .legend { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 20px; }
+  .sep { width: 1px; background: var(--border); margin: 0 6px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 11px; border-radius: 20px;
+    font-size: 11.5px; font-weight: 500; cursor: pointer;
+    background: var(--panel); border: 1px solid var(--border);
+    color: var(--text-main); user-select: none;
+    transition: border-color .15s, background .15s;
+  }
+  .chip .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .chip:hover { border-color: var(--copper); }
+  .chip.active { border-color: var(--copper); background: var(--copper-glow); }
+  .chip.dimmed { opacity: 0.35; }
 
-    /* Columnas laterales: tienen un padding vertical que las empareja con la hilera de pines */
-    /* Columnas laterales calibradas con paso fijo */
-    .col {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 5px; /* Distancia fija entre tarjetas */
-      padding-top: 22px; /* Alineación milimétrica del primer pin */
-      padding-bottom: 0;
-      justify-content: flex-start;
-    }
+  /* ===== ESCENARIO: todo se posiciona en % de la misma altura que la imagen ===== */
+  .pinout-stage {
+    position: relative;
+    width: 100%;
+    max-width: 1260px;
+    height: 720px;
+    margin: 0 auto;
+  }
+  .board-center {
+    position: absolute;
+    left: 50%; top: 0;
+    width: 360px; height: 720px;
+    transform: translateX(-50%);
+  }
+  .board-center img {
+    width: 100%; height: 100%;
+    object-fit: contain; display: block;
+    filter: drop-shadow(0 12px 28px rgba(0,0,0,.8));
+  }
+  .col {
+    position: absolute; top: 0; bottom: 0;
+    width: calc(50% - 180px + var(--hx));
+  }
+  .col.left  { left: 0; }
+  .col.right { right: 0; }
 
-    /* Filas de Pines con altura fija de paso */
-    .pin-btn {
-      display: flex;
-      align-items: center;
-      height: 31px; /* 31px de altura + 5px de gap = 36px por cada pin exactamente */
-      cursor: pointer;
-      color: inherit;
-    }
+  .pin-btn {
+    position: absolute; left: 0; right: 0;
+    height: 31px;
+    top: calc(var(--y0) + (var(--y1) - var(--y0)) * var(--i) / 18);
+    transform: translateY(-50%);
+    display: flex; align-items: center;
+    cursor: pointer;
+  }
+  .pin-btn:focus-visible { outline: none; }
+  .pin-btn:focus-visible .pin-card { outline: 2px solid var(--copper); }
 
-    .pin-card {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      padding: 0 8px;
-      height: 100%;
-      flex: 1;
-      border-radius: 6px;
-      background: rgba(17, 45, 34, 0.9);
-      border: 1px solid rgba(35, 88, 67, 0.85);
-      transition: all 0.12s ease;
-    }
-    .pin-btn:hover .pin-card {
-      background: var(--panel-hover);
-      border-color: var(--copper);
-    }
-    .pin-btn.selected .pin-card {
-      background: var(--panel-selected);
-      border-color: var(--copper);
-      box-shadow: 0 0 10px var(--copper-glow);
-    }
-    .pin-btn.dimmed { opacity: 0.2; }
+  .pin-card {
+    display: flex; align-items: center; gap: 7px;
+    padding: 0 8px; height: 100%; flex: 1; min-width: 0;
+    border-radius: 6px;
+    background: rgba(17, 45, 34, 0.9);
+    border: 1px solid rgba(35, 88, 67, 0.85);
+    transition: background .12s, border-color .12s, box-shadow .12s;
+  }
+  .pin-btn:hover .pin-card { background: var(--panel-hover); border-color: var(--copper); }
+  .pin-btn.selected .pin-card {
+    background: var(--panel-selected); border-color: var(--copper);
+    box-shadow: 0 0 10px var(--copper-glow);
+  }
+  .pin-btn.dimmed { opacity: 0.2; }
 
-    /* Línea conectora recta */
-    .pin-arrow {
-      width: 32px;
-      height: 2px;
-      background: var(--border);
-      position: relative;
-      flex: none;
-      transition: all 0.12s ease;
-    }
-    .pin-arrow::after {
-      content: '';
-      position: absolute;
-      top: -3px;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--border);
-      transition: all 0.12s ease;
-    }
+  .pin-arrow { width: 32px; height: 2px; background: var(--border); flex: none; transition: background .12s; }
+  .pin-btn:hover .pin-arrow, .pin-btn.selected .pin-arrow { background: var(--copper); }
 
-    /* Alineación Izquierda / Derecha */
-    .col.left .pin-arrow::after { right: 0; }
-    
-    .col.right .pin-btn { flex-direction: row-reverse; }
-    .col.right .pin-card { flex-direction: row-reverse; text-align: right; }
-    .col.right .pin-arrow::after { left: 0; }
+  .col.right .pin-btn, .col.right .pin-card { flex-direction: row-reverse; text-align: right; }
 
-    /* Iluminación de línea activa */
-    .pin-btn:hover .pin-arrow,
-    .pin-btn.selected .pin-arrow {
-      background: var(--copper);
-    }
-    .pin-btn:hover .pin-arrow::after,
-    .pin-btn.selected .pin-arrow::after {
-      background: var(--copper);
-      box-shadow: 0 0 8px var(--copper);
-    }
+  .pin-num {
+    width: 22px; height: 19px; background: #1b382d;
+    border: 1px solid var(--border); border-radius: 3px;
+    font-size: 10px; font-family: monospace;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted); flex: none;
+  }
+  .pin-bar { width: 4px; height: 18px; border-radius: 2px; flex: none; background: var(--p-color); }
+  .pin-label-box { min-width: 0; flex: 1; display: flex; align-items: baseline; gap: 6px; }
+  .col.right .pin-label-box { justify-content: flex-end; }
+  .pin-label { font-weight: 700; font-size: 12px; font-family: "SFMono-Regular", Consolas, monospace; white-space: nowrap; }
+  .pin-tags { font-size: 9.5px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lvl { width: 8px; height: 8px; border-radius: 50%; flex: none; }
 
-    .pin-num {
-      width: 22px;
-      height: 19px;
-      background: #1b382d;
-      border: 1px solid var(--border);
-      border-radius: 3px;
-      font-size: 10px;
-      font-family: monospace;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-muted);
-      flex: none;
-    }
-    .pin-label-box {
-      min-width: 0;
-      flex: 1;
-      display: flex;
-      align-items: baseline;
-      gap: 6px;
-    }
-    .col.right .pin-label-box { justify-content: flex-end; }
-    
-    .pin-label {
-      font-weight: 700;
-      font-size: 12px;
-      font-family: "SFMono-Regular", Consolas, monospace;
-      white-space: nowrap;
-    }
-    .pin-tags {
-      font-size: 9.5px;
-      color: var(--text-muted);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .pin-bar {
-      width: 4px;
-      height: 18px;
-      border-radius: 2px;
-      flex: none;
-      background: var(--p-color, var(--border));
-    }
+  /* Marcadores sobre los pines reales de la placa */
+  .hole {
+    position: absolute; width: 9px; height: 9px; border-radius: 50%;
+    transform: translate(-50%, -50%);
+    top: calc(var(--y0) + (var(--y1) - var(--y0)) * var(--i) / 18);
+    background: var(--p-color);
+    box-shadow: 0 0 0 2px rgba(0,0,0,.55);
+    pointer-events: none;
+    transition: opacity .15s;
+  }
+  .hole.l { left: var(--hx); }
+  .hole.r { left: calc(100% - var(--hx)); }
+  .hole.dimmed { opacity: .15; }
+  .hole.hot, .hole.selected {
+    width: 15px; height: 15px; z-index: 2;
+    box-shadow: 0 0 0 2px #fff, 0 0 14px 4px var(--p-color);
+  }
+  .hole.selected::after {
+    content: ''; position: absolute; inset: -8px; border-radius: 50%;
+    border: 2px solid var(--p-color);
+    animation: ping 1.4s ease-out infinite;
+  }
+  @keyframes ping { from { transform: scale(.6); opacity: .9; } to { transform: scale(1.6); opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .hole.selected::after { animation: none; } }
 
-    /* Panel inferior */
-    .info-dock {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: rgba(13, 35, 27, 0.98);
-      backdrop-filter: blur(10px);
-      border-top: 1px solid var(--border);
-      padding: 12px 20px;
-      box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.6);
-      z-index: 100;
-    }
-    .info-inner {
-      max-width: 1200px;
-      margin: 0 auto;
-      display: flex;
-      gap: 16px;
-      align-items: center;
-    }
-    .info-badge {
-      width: 50px;
-      height: 50px;
-      border-radius: 8px;
-      background: var(--panel);
-      border: 2px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      flex: none;
-      font-family: monospace;
-      font-weight: bold;
-    }
-    .info-badge .b-sub { font-size: 8px; opacity: 0.7; }
-    .info-badge .b-main { font-size: 14px; }
+  /* Panel inferior */
+  .info-dock {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(13, 35, 27, 0.98);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--border);
+    padding: 12px 20px;
+    box-shadow: 0 -8px 24px rgba(0,0,0,.6);
+    z-index: 100;
+    max-height: 48vh; overflow-y: auto;
+  }
+  .info-inner { max-width: 1200px; margin: 0 auto; display: flex; gap: 16px; align-items: center; }
+  .info-badge {
+    width: 50px; height: 50px; border-radius: 8px;
+    background: var(--panel); border: 2px solid var(--border);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    flex: none; font-family: monospace; font-weight: bold;
+  }
+  .info-badge .b-sub { font-size: 8px; opacity: .7; }
+  .info-badge .b-main { font-size: 14px; }
+  .info-content { flex: 1; min-width: 0; }
+  .info-header { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 3px; }
+  .info-title { font-size: 16px; font-weight: 700; }
+  .info-tag { font-size: 10.5px; font-family: monospace; padding: 1px 7px; border-radius: 4px; background: rgba(255,255,255,.1); }
+  .info-lvl { font-size: 10.5px; font-weight: 700; padding: 1px 8px; border-radius: 10px; color: #0b1e17; }
+  .info-sub { font-size: 11px; color: var(--text-muted); font-family: monospace; margin-bottom: 3px; }
+  .info-text { font-size: 13px; line-height: 1.45; color: #dbe7e1; }
+  .info-warn { font-size: 13px; font-weight: 600; margin-top: 3px; }
+  .codebox {
+    flex: 0 1 380px; position: relative;
+    background: #0a1913; border: 1px solid var(--border); border-radius: 8px;
+    padding: 9px 10px;
+  }
+  .codebox pre { font: 12px/1.5 "SFMono-Regular", Consolas, monospace; white-space: pre-wrap; color: #cfe8dc; padding-right: 66px; }
+  .copy {
+    position: absolute; top: 6px; right: 6px;
+    font-size: 11px; padding: 3px 9px; border-radius: 5px; cursor: pointer;
+    background: var(--panel-selected); color: var(--text-main); border: 1px solid var(--border);
+  }
+  .copy:hover { border-color: var(--copper); }
+  .keys { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 14px; }
 
-    .info-content { flex: 1; }
-    .info-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 2px;
-    }
-    .info-title {
-      font-size: 16px;
-      font-weight: 700;
-    }
-    .info-tag {
-      font-size: 10.5px;
-      font-family: monospace;
-      padding: 1px 7px;
-      border-radius: 4px;
-      background: rgba(255,255,255,0.1);
-      color: var(--copper);
-    }
-    .info-text {
-      font-size: 13px;
-      line-height: 1.4;
-      color: #dbe7e1;
-    }
-    .warning-box {
-      color: #ff9f89;
-      font-weight: 600;
-    }
-
-    @media (max-width: 900px) {
-      .pinout-stage { flex-direction: column; height: auto; }
-      .board-center { width: 100%; height: auto; max-width: 260px; margin: 0 auto 15px; }
-      .board-center img { height: auto; }
-      .col { padding: 0; gap: 4px; }
-      .pin-arrow { display: none; }
-      .col.right .pin-btn, .col.right .pin-card { flex-direction: row; text-align: left; }
-      .col.right .pin-label-box { justify-content: flex-start; }
-      .info-badge { display: none; }
-    }
-  </style>
+  @media (max-width: 980px) {
+    .pinout-stage { height: auto; }
+    .board-center { position: static; width: 100%; max-width: 240px; height: auto; margin: 0 auto 14px; transform: none; }
+    .board-center img { height: auto; }
+    .hole { display: none; }
+    .col { position: static; width: auto; margin-bottom: 6px; }
+    .pin-btn { position: relative; top: auto; transform: none; margin-bottom: 4px; }
+    .pin-arrow { display: none; }
+    .col.right .pin-btn, .col.right .pin-card { flex-direction: row; text-align: left; }
+    .col.right .pin-label-box { justify-content: flex-start; }
+    .info-badge { display: none; }
+    .info-inner { flex-direction: column; align-items: stretch; }
+    .codebox { flex: none; }
+    .keys { display: none; }
+  }
+</style>
 </head>
 <body>
 
 <div class="wrap">
   <header>
-    <p class="badge-sub">Espressif · ESP32-WROOM-32 (38 Pines)</p>
-    <h1>Pinout e Información de Hardware</h1>
-    <p class="desc">Filtra por categorías arriba o haz clic sobre cualquier pin para ver sus conexiones, buses compatibles y alertas técnicas.</p>
+    <p class="badge-sub">Espressif · ESP32-WROOM-32 (38 pines)</p>
+    <h1>Pinout e información de hardware</h1>
+    <p class="desc">Buscá un pin o una función, filtrá por categoría o por nivel de seguridad, y tocá cualquier pin para ver sus usos, advertencias y código de ejemplo.</p>
   </header>
 
+  <div class="tools">
+    <input id="search" type="search" placeholder="Buscar: SDA, GPIO21, ADC, touch, PWM…" aria-label="Buscar pin o función" autocomplete="off">
+    <span id="count"></span>
+  </div>
   <div class="legend" id="legend"></div>
 
   <div class="pinout-stage">
     <div class="col left" id="colLeft"></div>
-    <div class="board-center">
-      <img src="esp32.png" alt="ESP32 NodeMCU 38 Pines">
+    <div class="board-center" id="board">
+      <img src="esp32.png" alt="ESP32 NodeMCU 38 pines">
     </div>
     <div class="col right" id="colRight"></div>
   </div>
+  <p class="keys">Teclado: ↑ ↓ cambian de pin en el mismo lado · ← → pasan al lado opuesto · Esc limpia la búsqueda</p>
 </div>
 
 <div class="info-dock">
@@ -361,256 +262,330 @@
     </div>
     <div class="info-content">
       <div class="info-header">
-        <h3 class="info-title" id="infoTitle">Selecciona un pin del circuito</h3>
-        <span class="info-tag" id="infoCategory">CONSULTA TÉCNICA</span>
+        <h3 class="info-title" id="infoTitle">Seleccioná un pin</h3>
+        <span class="info-tag" id="infoCategory">CONSULTA</span>
+        <span class="info-lvl" id="infoLvl" hidden></span>
       </div>
-      <p class="info-text" id="infoDesc">Haz clic en cualquiera de los 38 terminales para revisar su mapeo GPIO, canales analógicos (ADC/DAC), buses de comunicación y recomendaciones de conexión.</p>
+      <p class="info-sub" id="infoSub"></p>
+      <p class="info-text" id="infoDesc">Tocá cualquiera de los 38 terminales para ver su GPIO, canales ADC/DAC/touch, buses por defecto y recomendaciones de uso. El pin se ilumina sobre la placa.</p>
+      <p class="info-warn" id="infoWarn" hidden></p>
+    </div>
+    <div class="codebox" id="codeBox" hidden>
+      <pre id="codeText"></pre>
+      <button class="copy" id="copyBtn" type="button">Copiar</button>
     </div>
   </div>
 </div>
 
 <script>
 const CATS = {
-  power: { label: 'Alimentación', color: 'var(--c-power)' },
-  gnd:   { label: 'GND (Masa)',   color: 'var(--c-gnd)' },
-  adc:   { label: 'ADC',          color: 'var(--c-adc)' },
-  dac:   { label: 'DAC (Audio)',  color: 'var(--c-dac)' },
-  touch: { label: 'Touch',        color: 'var(--c-touch)' },
-  uart:  { label: 'UART (Serie)', color: 'var(--c-uart)' },
-  i2c:   { label: 'I2C',          color: 'var(--c-i2c)' },
-  spi:   { label: 'SPI',          color: 'var(--c-spi)' },
-  strap: { label: 'Strapping Pin',color: 'var(--c-strap)' },
-  flash: { label: 'Flash (Evitar)',color:'var(--c-flash)' }
+  power: { label: 'Alimentación',  color: 'var(--c-power)' },
+  gnd:   { label: 'GND (masa)',    color: 'var(--c-gnd)' },
+  adc:   { label: 'ADC',           color: 'var(--c-adc)' },
+  dac:   { label: 'DAC (audio)',   color: 'var(--c-dac)' },
+  touch: { label: 'Touch',         color: 'var(--c-touch)' },
+  uart:  { label: 'UART (serie)',  color: 'var(--c-uart)' },
+  i2c:   { label: 'I2C',           color: 'var(--c-i2c)' },
+  spi:   { label: 'SPI',           color: 'var(--c-spi)' },
+  strap: { label: 'Strapping',     color: 'var(--c-strap)' },
+  flash: { label: 'Flash (evitar)',color: 'var(--c-flash)' }
 };
 
-const PINS = [
-  // --- LADO IZQUIERDO (1 al 19) ---
-  { pos: 1,  side: 'L', silk: '3V3',  name: '3.3V',    cat: 'power', tags: 'ALIMENTACIÓN',
-    title: '3.3 V — Salida Regulada',
-    desc: 'Salida de 3.3 V provista por el regulador integrado. Útil para alimentar sensores, transceptores y circuitos lógicos de bajo consumo (típ. máx. 500-600 mA).' },
+const LVL = {
+  g: { label: 'Libre',              color: 'var(--l-g)' },
+  y: { label: 'Con cuidado',        color: 'var(--l-y)' },
+  r: { label: 'No usar',            color: 'var(--l-r)' },
+  n: { label: 'Alimentación / masa',color: 'var(--l-n)' }
+};
 
-  { pos: 2,  side: 'L', silk: 'EN',   name: 'EN (RST)',cat: 'power', tags: 'RESET / ENABLE',
-    title: 'EN (CHIP_PU) — Reset / Habilitación',
-    desc: 'Pin de habilitación activo en nivel alto con pull-up interno. Si se lleva a masa (0 V), el chip se reinicia. Conectado al botón físico "EN".' },
+const HSPI = 'SPIClass hspi(HSPI);\nhspi.begin(14, 12, 13, 15); // SCK, MISO, MOSI, SS';
+const VSPI = 'SPI.begin(18, 19, 23, 5); // SCK, MISO, MOSI, SS';
+const WIRE = 'Wire.begin(21, 22); // SDA, SCL';
+const SER  = 'Serial.begin(115200);';
+const SER2 = 'Serial2.begin(9600, SERIAL_8N1, 16, 17); // RX, TX';
+const FLASH_WARN = 'Está conectado a la Flash interna: usarlo cuelga el procesador.';
+const INPUT_ONLY = 'Solo entrada: no puede emitir señales y no tiene pull-up/pull-down interno.';
 
-  { pos: 3,  side: 'L', silk: 'SVP',  name: 'GPIO36',  cat: 'adc',   tags: 'SENSOR_VP · ADC1_CH0',
-    title: 'GPIO36 / SENSOR_VP — Entrada Analógica',
-    desc: 'Entrada ADC1 (canal 0). IMPORTANTE: Es un pin "Input-Only" (solo entrada, no puede emitir señales digitales) y carece de pull-up/pull-down interno. Funciona con Wi-Fi activo.' },
+// [pos, serigrafía, nombre, categoría, tags, nivel, descripción, código, advertencia]
+const RAW = [
+  // ---- LADO IZQUIERDO (1 a 19) ----
+  [1, '3V3', '3.3V', 'power', 'ALIMENTACIÓN', 'n',
+    'Salida de 3.3 V del regulador de la placa. Alimenta sensores y lógica de bajo consumo (razonable hasta unos 500 mA).'],
+  [2, 'EN', 'EN (RST)', 'power', 'RESET / ENABLE', 'n',
+    'Habilitación del chip, activo en alto con pull-up interno. Al llevarlo a GND el chip se reinicia. Va conectado al botón "EN".'],
+  [3, 'SVP', 'GPIO36', 'adc', 'SENSOR_VP · ADC1_CH0', 'y',
+    'Entrada analógica ADC1 canal 0. Funciona con Wi-Fi activo.',
+    'int v = analogRead(36); // 0 a 4095', INPUT_ONLY],
+  [4, 'SVN', 'GPIO39', 'adc', 'SENSOR_VN · ADC1_CH3', 'y',
+    'Entrada analógica ADC1 canal 3. Funciona con Wi-Fi activo.',
+    'int v = analogRead(39); // 0 a 4095', INPUT_ONLY],
+  [5, '34', 'GPIO34', 'adc', 'ADC1_CH6', 'y',
+    'Entrada analógica ADC1 canal 6. Ideal para sensores analógicos de temperatura o luz.',
+    'int v = analogRead(34); // 0 a 4095', INPUT_ONLY],
+  [6, '35', 'GPIO35', 'adc', 'ADC1_CH7', 'y',
+    'Entrada analógica ADC1 canal 7. Funciona con Wi-Fi activo.',
+    'int v = analogRead(35); // 0 a 4095', INPUT_ONLY],
+  [7, '32', 'GPIO32', 'touch', 'TOUCH9 · ADC1_CH4', 'g',
+    'GPIO completo: entrada/salida digital, PWM e interrupciones. Además sensa touch capacitivo (T9) y lee ADC1.',
+    'int a = analogRead(32);\nint t = touchRead(T9);'],
+  [8, '33', 'GPIO33', 'touch', 'TOUCH8 · ADC1_CH5', 'g',
+    'GPIO de propósito general con touch capacitivo (T8) y ADC1.',
+    'int a = analogRead(33);\nint t = touchRead(T8);'],
+  [9, '25', 'GPIO25', 'dac', 'DAC1 · ADC2_CH8', 'g',
+    'Salida analógica real de 8 bits (0 a 3.3 V), útil para audio o referencias. También es GPIO digital y ADC2 (ADC2 no funciona con el Wi-Fi activo).',
+    'dacWrite(25, 128); // ≈ 1.65 V'],
+  [10, '26', 'GPIO26', 'dac', 'DAC2 · ADC2_CH9', 'g',
+    'Segunda salida analógica real de 8 bits. También es GPIO digital y ADC2 (no usar ADC2 con Wi-Fi activo).',
+    'dacWrite(26, 128); // ≈ 1.65 V'],
+  [11, '27', 'GPIO27', 'touch', 'TOUCH7 · ADC2_CH7', 'g',
+    'GPIO general con touch capacitivo (T7). ADC2 no puede usarse mientras el Wi-Fi está transmitiendo.',
+    'int t = touchRead(T7);'],
+  [12, '14', 'GPIO14', 'spi', 'HSPI_CLK · TOUCH6 · ADC2', 'y',
+    'Reloj (SCK) del bus HSPI. También touch T6 y ADC2.',
+    HSPI, 'No es strapping, pero emite una señal PWM breve al arrancar.'],
+  [13, '12', 'GPIO12', 'strap', 'STRAPPING · HSPI_MISO · TOUCH5', 'y',
+    'Fija el voltaje de la Flash SPI al encender (MTDI). También es MISO de HSPI y touch T5.',
+    HSPI, 'Si está en nivel ALTO al encender, la placa puede no arrancar. No conectes cargas que lo suban.'],
+  [14, 'GND', 'GND', 'gnd', 'TIERRA / 0V', 'n',
+    'Referencia de 0 V. Conectá acá el común de las fuentes y circuitos externos.'],
+  [15, '13', 'GPIO13', 'touch', 'TOUCH4 · ADC2_CH4 · HSPI_MOSI', 'g',
+    'GPIO general con touch capacitivo (T4). Es el MOSI del bus HSPI.',
+    HSPI],
+  [16, 'SD2', 'GPIO9', 'flash', 'SPI_FLASH_D2 (RESERVADO)', 'r',
+    'Línea de datos de la memoria Flash SPI interna.', null, FLASH_WARN],
+  [17, 'SD3', 'GPIO10', 'flash', 'SPI_FLASH_D3 (RESERVADO)', 'r',
+    'Línea de datos de la memoria Flash SPI interna.', null, FLASH_WARN],
+  [18, 'CMD', 'GPIO11', 'flash', 'SPI_FLASH_CMD (RESERVADO)', 'r',
+    'Línea de comandos de la Flash integrada del módulo WROOM.', null, FLASH_WARN],
+  [19, '5V', 'VIN (5V)', 'power', 'ALIMENTACIÓN EXTERNA', 'n',
+    'Alimentación de 5 V previa al regulador. Está unida a los 5 V del micro-USB, o sirve para alimentar con una fuente externa regulada.'],
 
-  { pos: 4,  side: 'L', silk: 'SVN',  name: 'GPIO39',  cat: 'adc',   tags: 'SENSOR_VN · ADC1_CH3',
-    title: 'GPIO39 / SENSOR_VN — Entrada Analógica',
-    desc: 'Entrada ADC1 (canal 3). Pin solo de entrada (Input-Only). Sin resistencias de polarización internas. Compatible con Wi-Fi activo.' },
-
-  { pos: 5,  side: 'L', silk: '34',   name: 'GPIO34',  cat: 'adc',   tags: 'ADC1_CH6',
-    title: 'GPIO34 — Entrada Analógica',
-    desc: 'Entrada ADC1 (canal 6). Pin de solo entrada (Input-Only). Ideal para lectura de sensores analógicos de temperatura o luz.' },
-
-  { pos: 6,  side: 'L', silk: '35',   name: 'GPIO35',  cat: 'adc',   tags: 'ADC1_CH7',
-    title: 'GPIO35 — Entrada Analógica',
-    desc: 'Entrada ADC1 (canal 7). Pin de solo entrada (Input-Only). Funciona en conjunto con Wi-Fi sin interferencias del stack de red.' },
-
-  { pos: 7,  side: 'L', silk: '32',   name: 'GPIO32',  cat: 'touch', tags: 'TOUCH9 · ADC1_CH4',
-    title: 'GPIO32 — GPIO / Touch / ADC',
-    desc: 'Pin multifuncional completo (entrada/salida digital, PWM, interrupciones externas). Soporta sensado táctil capacitivo (Touch9) y lectura ADC1.' },
-
-  { pos: 8,  side: 'L', silk: '33',   name: 'GPIO33',  cat: 'touch', tags: 'TOUCH8 · ADC1_CH5',
-    title: 'GPIO33 — GPIO / Touch / ADC',
-    desc: 'Pin multifuncional de propósito general. Soporta sensor táctil capacitivo (Touch8) y entrada analógica ADC1.' },
-
-  { pos: 9,  side: 'L', silk: '25',   name: 'GPIO25',  cat: 'dac',   tags: 'DAC1 · ADC2_CH8',
-    title: 'GPIO25 — Conversor D/A (DAC1)',
-    desc: 'Salida analógica real con resolución de 8 bits (genera voltajes reales de 0 a 3.3 V, excelente para generar formas de onda de audio o referencias). Forma parte de ADC2.' },
-
-  { pos: 10, side: 'L', silk: '26',   name: 'GPIO26',  cat: 'dac',   tags: 'DAC2 · ADC2_CH9',
-    title: 'GPIO26 — Conversor D/A (DAC2)',
-    desc: 'Segunda salida analógica real de 8 bits (DAC2). También opera como GPIO digital y entrada analógica ADC2.' },
-
-  { pos: 11, side: 'L', silk: '27',   name: 'GPIO27',  cat: 'touch', tags: 'TOUCH7 · ADC2_CH7',
-    title: 'GPIO27 — GPIO / Touch / ADC',
-    desc: 'GPIO general con sensor táctil capacitivo (Touch7). Nota: ADC2 no puede utilizarse de forma simultánea con transmisiones activas de Wi-Fi.' },
-
-  { pos: 12, side: 'L', silk: '14',   name: 'GPIO14',  cat: 'spi',   tags: 'HSPI_CLK · TOUCH6 · ADC2',
-    title: 'GPIO14 — HSPI CLK / Touch6',
-    desc: 'Línea de reloj para el bus secundario HSPI. Pin strapping: emite una señal PWM de depuración momentánea durante el arranque.' },
-
-  { pos: 13, side: 'L', silk: '12',   name: 'GPIO12',  cat: 'strap', tags: 'STRAPPING · MTDI · TOUCH5',
-    title: 'GPIO12 — Strapping Pin Crítico',
-    desc: '<span class="warning-box">ADVERTENCIA DE ARRANQUE:</span> Fija el voltaje de la Flash SPI al encender. Si se mantiene en nivel ALTO externo durante el arranque, la placa puede no iniciar.' },
-
-  { pos: 14, side: 'L', silk: 'GND',  name: 'GND',     cat: 'gnd',   tags: 'TIERRA / 0V',
-    title: 'GND — Referencia Común de Tierra',
-    desc: 'Punto de potencial de referencia de 0 V. Conectar aquí el común de las fuentes de poder y circuitos externos.' },
-
-  { pos: 15, side: 'L', silk: '13',   name: 'GPIO13',  cat: 'touch', tags: 'TOUCH4 · ADC2_CH4 · HSPI_ID',
-    title: 'GPIO13 — GPIO / Touch4 / HSPI',
-    desc: 'Pin de propósito general, compatible con sensado táctil capacitivo (Touch4) y datos de HSPI (MISO).' },
-
-  { pos: 16, side: 'L', silk: 'SD2',  name: 'GPIO9',   cat: 'flash', tags: 'SPI_FLASH_D2 (RESERVADO)',
-    title: 'GPIO9 / SD2 — Conexión Flash Integrada',
-    desc: '<span class="warning-box">NO UTILIZAR:</span> Conectado internamente al chip de memoria Flash SPI. Intentar manipularlo provoca cuelgues del procesador.' },
-
-  { pos: 17, side: 'L', silk: 'SD3',  name: 'GPIO10',  cat: 'flash', tags: 'SPI_FLASH_D3 (RESERVADO)',
-    title: 'GPIO10 / SD3 — Conexión Flash Integrada',
-    desc: '<span class="warning-box">NO UTILIZAR:</span> Bus interno de comunicación con la memoria Flash de código.' },
-
-  { pos: 18, side: 'L', silk: 'CMD',  name: 'GPIO11',  cat: 'flash', tags: 'SPI_FLASH_CMD (RESERVADO)',
-    title: 'GPIO11 / CMD — Conexión Flash Integrada',
-    desc: '<span class="warning-box">NO UTILIZAR:</span> Línea de comandos de la memoria Flash integrada del módulo WROOM.' },
-
-  { pos: 19, side: 'L', silk: '5V',   name: 'VIN (5V)',cat: 'power', tags: 'ALIMENTACIÓN EXTERNA',
-    title: '5V / VIN — Entrada de Alimentación',
-    desc: 'Alimentación principal (5 V) previa al regulador LDO. Conectada a los 5 V del conector Micro-USB o apta para alimentar con fuente externa regulada.' },
-
-  // --- LADO DERECHO (20 al 38) ---
-  { pos: 20, side: 'R', silk: 'GND',  name: 'GND',     cat: 'gnd',   tags: 'TIERRA / 0V',
-    title: 'GND — Masa Superior',
-    desc: 'Referencia común de masa de la placa.' },
-
-  { pos: 21, side: 'R', silk: '23',   name: 'GPIO23',  cat: 'spi',   tags: 'VSPI_MOSI',
-    title: 'GPIO23 — Bus SPI Principal (MOSI)',
-    desc: 'Línea Master Out / Slave In por defecto para el bus VSPI. Usado ampliamente para pantallas TFT, displays OLED SPI y lectores MicroSD.' },
-
-  { pos: 22, side: 'R', silk: '22',   name: 'GPIO22',  cat: 'i2c',   tags: 'I2C_SCL',
-    title: 'GPIO22 — Bus I2C Reloj (SCL)',
-    desc: 'Línea de sincronismo de reloj (SCL) por defecto en Arduino IDE (Wire.h). Ideal para sensores I2C (BME280, MPU6050, LCD con mochila I2C).' },
-
-  { pos: 23, side: 'R', silk: 'TX',   name: 'GPIO1',   cat: 'uart',  tags: 'UART0_TXD',
-    title: 'GPIO1 / TX0 — Transmisión Serie de Depuración',
-    desc: 'Salida TX conectada al puente USB-Serie de la placa. Utilizada por Serial.print() y el monitor serie de la computadora.' },
-
-  { pos: 24, side: 'R', silk: 'RX',   name: 'GPIO3',   cat: 'uart',  tags: 'UART0_RXD',
-    title: 'GPIO3 / RX0 — Recepción Serie',
-    desc: 'Entrada RX conectada al conversor USB. Utilizada para subir sketches por USB y recibir datos con Serial.read().' },
-
-  { pos: 25, side: 'R', silk: '21',   name: 'GPIO21',  cat: 'i2c',   tags: 'I2C_SDA',
-    title: 'GPIO21 — Bus I2C Datos (SDA)',
-    desc: 'Línea de datos (SDA) por defecto para comunicación I2C. Requiere resistencias pull-up (normalmente incluidas en los módulos externos).' },
-
-  { pos: 26, side: 'R', silk: 'GND',  name: 'GND',     cat: 'gnd',   tags: 'TIERRA / 0V',
-    title: 'GND — Tierra Intermedia',
-    desc: 'Pin de conexión a tierra compartida.' },
-
-  { pos: 27, side: 'R', silk: '19',   name: 'GPIO19',  cat: 'spi',   tags: 'VSPI_MISO',
-    title: 'GPIO19 — Bus SPI Principal (MISO)',
-    desc: 'Línea Master In / Slave Out para el bus VSPI. Recibe información desde módulos externos hacia el ESP32.' },
-
-  { pos: 28, side: 'R', silk: '18',   name: 'GPIO18',  cat: 'spi',   tags: 'VSPI_SCK',
-    title: 'GPIO18 — Bus SPI Principal (SCK / Reloj)',
-    desc: 'Señal de reloj generada por el ESP32 para sincronizar transferencias de alta velocidad en el bus VSPI.' },
-
-  { pos: 29, side: 'R', silk: '5',    name: 'GPIO5',   cat: 'strap', tags: 'STRAPPING · VSPI_SS',
-    title: 'GPIO5 — Strapping Pin / SPI Chip Select',
-    desc: 'Slave Select por defecto de VSPI. Es un pin strapping: si se mantiene bajo al encender, altera los mensajes de booteo.' },
-
-  { pos: 30, side: 'R', silk: '17',   name: 'GPIO17',  cat: 'uart',  tags: 'UART2_TXD',
-    title: 'GPIO17 — Puerto Serie Libre (UART2 TX)',
-    desc: 'Transmisión serie libre para módulos externos (como GPS, módulos Bluetooth HC-05, lectores RFID o módems SIM).' },
-
-  { pos: 31, side: 'R', silk: '16',   name: 'GPIO16',  cat: 'uart',  tags: 'UART2_RXD',
-    title: 'GPIO16 — Puerto Serie Libre (UART2 RX)',
-    desc: 'Recepción serie secundaria (UART2). Disponible para conectar sensores o dispositivos con salida UART sin bloquear el USB.' },
-
-  { pos: 32, side: 'R', silk: '4',    name: 'GPIO4',   cat: 'touch', tags: 'TOUCH0 · ADC2_CH0',
-    title: 'GPIO4 — GPIO / Touch0 / ADC2',
-    desc: 'GPIO de uso general con soporte para electrodos capacitivos (Touch0). Inhabilitado en modo ADC si se activa el Wi-Fi.' },
-
-  { pos: 33, side: 'R', silk: '0',    name: 'GPIO0',   cat: 'strap', tags: 'STRAPPING · TOUCH1 · BOTÓN BOOT',
-    title: 'GPIO0 — Strapping Pin de Modo de Grabación',
-    desc: '<span class="warning-box">BOOT PIN:</span> Conectado al pulsador "BOOT". Si está en 0 V al iniciar, entra en modo de programación/flasheo de firmware.' },
-
-  { pos: 34, side: 'R', silk: '2',    name: 'GPIO2',   cat: 'strap', tags: 'STRAPPING · LED ONBOARD · TOUCH2',
-    title: 'GPIO2 — LED Integrado / Strapping',
-    desc: 'Conectado al LED azul soldado en la placa (NodeMCU). Debe quedar libre o en bajo durante el arranque para permitir la carga de código.' },
-
-  { pos: 35, side: 'R', silk: '15',   name: 'GPIO15',  cat: 'strap', tags: 'STRAPPING · TOUCH3 · HSPI_SS',
-    title: 'GPIO15 — Strapping Pin / HSPI SS',
-    desc: 'Línea de selección de esclavo para HSPI. Pin strapping: si se lleva a nivel alto apaga mensajes de depuración por UART0.' },
-
-  { pos: 36, side: 'R', silk: 'SD1',  name: 'GPIO8',   cat: 'flash', tags: 'SPI_FLASH_D1 (RESERVADO)',
-    title: 'GPIO8 / SD1 — Bus Flash Interno',
-    desc: '<span class="warning-box">NO UTILIZAR:</span> Conectado físicamente al bus SPI de la memoria interna.' },
-
-  { pos: 37, side: 'R', silk: 'SD0',  name: 'GPIO7',   cat: 'flash', tags: 'SPI_FLASH_D0 (RESERVADO)',
-    title: 'GPIO7 / SD0 — Bus Flash Interno',
-    desc: '<span class="warning-box">NO UTILIZAR:</span> Línea interna de datos de la Flash.' },
-
-  { pos: 38, side: 'R', silk: 'CLK',  name: 'GPIO6',   cat: 'flash', tags: 'SPI_FLASH_CLK (RESERVADO)',
-    title: 'GPIO6 / CLK — Reloj Flash Interno',
-    desc: '<span class="warning-box">NO UTILIZAR:</span> Reloj de sincronización de la Flash integrada.' }
+  // ---- LADO DERECHO (20 a 38) ----
+  [20, 'GND', 'GND', 'gnd', 'TIERRA / 0V', 'n', 'Masa común de la placa.'],
+  [21, '23', 'GPIO23', 'spi', 'VSPI_MOSI', 'g',
+    'MOSI (Master Out / Slave In) del bus VSPI por defecto. Muy usado en pantallas TFT/OLED SPI y lectores microSD.',
+    VSPI],
+  [22, '22', 'GPIO22', 'i2c', 'I2C_SCL', 'g',
+    'Reloj (SCL) del bus I2C por defecto en Arduino (Wire.h). Para sensores como BME280 o MPU6050 y LCD con mochila I2C.',
+    WIRE],
+  [23, 'TX', 'GPIO1', 'uart', 'UART0_TXD', 'y',
+    'TX conectado al puente USB-serie. Lo usan Serial.print() y el monitor serie.',
+    SER, 'Compartido con el USB: si lo usás para otra cosa perdés el monitor serie.'],
+  [24, 'RX', 'GPIO3', 'uart', 'UART0_RXD', 'y',
+    'RX conectado al conversor USB. Se usa para subir sketches y para Serial.read().',
+    SER, 'Compartido con el USB: si lo usás para otra cosa perdés la carga y el monitor serie.'],
+  [25, '21', 'GPIO21', 'i2c', 'I2C_SDA', 'g',
+    'Datos (SDA) del bus I2C por defecto. Necesita resistencias pull-up (los módulos externos suelen traerlas).',
+    WIRE],
+  [26, 'GND', 'GND', 'gnd', 'TIERRA / 0V', 'n', 'Masa común de la placa.'],
+  [27, '19', 'GPIO19', 'spi', 'VSPI_MISO', 'g',
+    'MISO (Master In / Slave Out) del bus VSPI. Recibe datos de los módulos externos.',
+    VSPI],
+  [28, '18', 'GPIO18', 'spi', 'VSPI_SCK', 'g',
+    'Reloj (SCK) del bus VSPI, generado por el ESP32 para transferencias de alta velocidad.',
+    VSPI],
+  [29, '5', 'GPIO5', 'strap', 'STRAPPING · VSPI_SS', 'y',
+    'Chip Select (SS) por defecto de VSPI.',
+    VSPI, 'Es pin de strapping y emite una señal PWM breve al arrancar. Evitá forzarlo a nivel bajo durante el encendido.'],
+  [30, '17', 'GPIO17', 'uart', 'UART2_TXD', 'g',
+    'TX de UART2, libre para GPS, Bluetooth HC-05, RFID o módems SIM. En módulos WROVER se usa para la PSRAM.',
+    SER2],
+  [31, '16', 'GPIO16', 'uart', 'UART2_RXD', 'g',
+    'RX de UART2, libre para sensores o módulos serie sin ocupar el USB. En módulos WROVER se usa para la PSRAM.',
+    SER2],
+  [32, '4', 'GPIO4', 'touch', 'TOUCH0 · ADC2_CH0', 'g',
+    'GPIO de uso general con touch capacitivo (T0). Su ADC2 no funciona con el Wi-Fi activo.',
+    'int t = touchRead(T0);'],
+  [33, '0', 'GPIO0', 'strap', 'STRAPPING · TOUCH1 · BOTÓN BOOT', 'y',
+    'Conectado al pulsador BOOT. Si está en 0 V al encender, entra en modo de grabación de firmware.',
+    'pinMode(0, INPUT_PULLUP); // botón BOOT', 'Dejalo libre o en alto al arrancar; si no, la placa queda esperando firmware.'],
+  [34, '2', 'GPIO2', 'strap', 'STRAPPING · LED ONBOARD · TOUCH2', 'y',
+    'Conectado al LED azul de la placa (en la mayoría de las NodeMCU). También touch T2.',
+    'pinMode(2, OUTPUT);\ndigitalWrite(2, HIGH); // enciende el LED azul', 'Debe estar libre o en bajo durante el arranque para poder cargar código.'],
+  [35, '15', 'GPIO15', 'strap', 'STRAPPING · TOUCH3 · HSPI_SS', 'y',
+    'Chip Select (SS) de HSPI y touch T3.',
+    HSPI, 'Si está en nivel BAJO al encender, se silencian los mensajes de arranque por UART0.'],
+  [36, 'SD1', 'GPIO8', 'flash', 'SPI_FLASH_D1 (RESERVADO)', 'r',
+    'Línea de datos de la memoria Flash SPI interna.', null, FLASH_WARN],
+  [37, 'SD0', 'GPIO7', 'flash', 'SPI_FLASH_D0 (RESERVADO)', 'r',
+    'Línea de datos de la memoria Flash SPI interna.', null, FLASH_WARN],
+  [38, 'CLK', 'GPIO6', 'flash', 'SPI_FLASH_CLK (RESERVADO)', 'r',
+    'Reloj de la Flash integrada.', null, FLASH_WARN]
 ];
 
-let activeFilter = null;
-let selectedPin = null;
+const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
-const legendEl = document.getElementById('legend');
-const colLeftEl = document.getElementById('colLeft');
-const colRightEl = document.getElementById('colRight');
-
-Object.entries(CATS).forEach(([key, val]) => {
-  const chip = document.createElement('div');
-  chip.className = 'chip';
-  chip.innerHTML = `<span class="dot" style="background:${val.color}"></span> ${val.label}`;
-  chip.addEventListener('click', () => {
-    activeFilter = (activeFilter === key) ? null : key;
-    applyFilter();
-  });
-  chip.dataset.cat = key;
-  legendEl.appendChild(chip);
+const PINS = RAW.map(([pos, silk, name, cat, tags, lvl, desc, code, warn]) => {
+  const gpio = (name.match(/^GPIO(\d+)/) || [])[1];
+  if (!code) {
+    if (lvl === 'r') code = '// Reservado para la Flash: no lo uses';
+    else if (gpio) code = `pinMode(${gpio}, OUTPUT);\ndigitalWrite(${gpio}, HIGH);`;
+    else code = '';
+  }
+  return {
+    pos, silk, name, cat, tags, lvl, desc, code, warn: warn || '',
+    side: pos <= 19 ? 'L' : 'R',
+    idx: (pos - 1) % 19,
+    hay: norm([name, silk, tags, CATS[cat].label, LVL[lvl].label, desc, warn || ''].join(' '))
+  };
 });
 
-function createPinElement(pin) {
+const els = {};
+let activeFilter = null;
+let selected = null;
+
+const $ = id => document.getElementById(id);
+const boardEl = $('board');
+
+/* ---- Chips de filtro ---- */
+function addChip(key, label, color) {
+  const chip = document.createElement('div');
+  chip.className = 'chip';
+  chip.dataset.key = key;
+  chip.tabIndex = 0;
+  chip.setAttribute('role', 'button');
+  chip.innerHTML = `<span class="dot" style="background:${color}"></span> ${label}`;
+  const toggle = () => { activeFilter = activeFilter === key ? null : key; applyFilter(); };
+  chip.addEventListener('click', toggle);
+  chip.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+  $('legend').appendChild(chip);
+}
+Object.entries(CATS).forEach(([k, v]) => addChip('cat:' + k, v.label, v.color));
+$('legend').appendChild(Object.assign(document.createElement('span'), { className: 'sep' }));
+['g', 'y', 'r'].forEach(k => addChip('lvl:' + k, LVL[k].label, LVL[k].color));
+
+/* ---- Pines ---- */
+function createPin(p) {
+  const color = CATS[p.cat].color;
+
   const btn = document.createElement('div');
   btn.className = 'pin-btn';
-  btn.dataset.pos = pin.pos;
-  btn.style.setProperty('--p-color', CATS[pin.cat].color);
-
+  btn.tabIndex = 0;
+  btn.setAttribute('role', 'button');
+  btn.setAttribute('aria-label', `${p.name}, serigrafía ${p.silk}, ${LVL[p.lvl].label}`);
+  btn.style.setProperty('--i', p.idx);
+  btn.style.setProperty('--p-color', color);
   btn.innerHTML = `
     <div class="pin-card">
-      <div class="pin-num">${pin.silk}</div>
+      <div class="pin-num">${p.silk}</div>
       <div class="pin-bar"></div>
       <div class="pin-label-box">
-        <div class="pin-label">${pin.name}</div>
-        <div class="pin-tags">${pin.tags}</div>
+        <span class="pin-label">${p.name}</span>
+        <span class="pin-tags">${p.tags}</span>
       </div>
+      <span class="lvl" style="background:${LVL[p.lvl].color}" title="${LVL[p.lvl].label}"></span>
     </div>
-    <div class="pin-arrow"></div>
-  `;
+    <div class="pin-arrow"></div>`;
 
-  btn.addEventListener('click', () => selectPin(pin));
+  const hole = document.createElement('span');
+  hole.className = 'hole ' + (p.side === 'L' ? 'l' : 'r');
+  hole.style.setProperty('--i', p.idx);
+  hole.style.setProperty('--p-color', color);
+  boardEl.appendChild(hole);
+
+  const hot = on => hole.classList.toggle('hot', on);
+  btn.addEventListener('click', () => selectPin(p));
+  btn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectPin(p); } });
+  btn.addEventListener('mouseenter', () => hot(true));
+  btn.addEventListener('mouseleave', () => hot(false));
+  btn.addEventListener('focus', () => hot(true));
+  btn.addEventListener('blur', () => hot(false));
+
+  els[p.pos] = { btn, hole };
   return btn;
 }
+PINS.filter(p => p.side === 'L').forEach(p => $('colLeft').appendChild(createPin(p)));
+PINS.filter(p => p.side === 'R').forEach(p => $('colRight').appendChild(createPin(p)));
 
-PINS.filter(p => p.side === 'L').forEach(p => colLeftEl.appendChild(createPinElement(p)));
-PINS.filter(p => p.side === 'R').forEach(p => colRightEl.appendChild(createPinElement(p)));
-
+/* ---- Filtro + búsqueda ---- */
 function applyFilter() {
+  const q = norm($('search').value.trim());
   document.querySelectorAll('.chip').forEach(c => {
-    const isThis = c.dataset.cat === activeFilter;
-    c.classList.toggle('active', isThis);
-    c.classList.toggle('dimmed', activeFilter !== null && !isThis);
+    const on = c.dataset.key === activeFilter;
+    c.classList.toggle('active', on);
+    c.classList.toggle('dimmed', activeFilter !== null && !on);
+  });
+  let n = 0;
+  PINS.forEach(p => {
+    const okF = !activeFilter ||
+      (activeFilter.startsWith('cat:') ? p.cat === activeFilter.slice(4) : p.lvl === activeFilter.slice(4));
+    const okQ = !q || p.hay.includes(q);
+    const match = okF && okQ;
+    if (match) n++;
+    els[p.pos].btn.classList.toggle('dimmed', !match);
+    els[p.pos].hole.classList.toggle('dimmed', !match);
+  });
+  $('count').textContent = (activeFilter || q) ? `${n} de 38 pines` : '';
+}
+$('search').addEventListener('input', applyFilter);
+
+/* ---- Selección y panel de información ---- */
+function selectPin(p) {
+  selected = p;
+  PINS.forEach(o => {
+    const on = o.pos === p.pos;
+    els[o.pos].btn.classList.toggle('selected', on);
+    els[o.pos].hole.classList.toggle('selected', on);
   });
 
-  document.querySelectorAll('.pin-btn').forEach(btn => {
-    const pin = PINS.find(p => p.pos === Number(btn.dataset.pos));
-    const match = !activeFilter || pin.cat === activeFilter;
-    btn.classList.toggle('dimmed', !match);
-  });
+  const c = CATS[p.cat], l = LVL[p.lvl];
+  $('badgePin').textContent = p.silk;
+  $('infoBadge').style.borderColor = c.color;
+  $('infoTitle').textContent = `${p.name} (serigrafía ${p.silk})`;
+  $('infoCategory').textContent = c.label;
+  $('infoCategory').style.color = c.color;
+  $('infoLvl').hidden = false;
+  $('infoLvl').textContent = l.label;
+  $('infoLvl').style.background = l.color;
+  $('infoSub').textContent = p.tags;
+  $('infoDesc').textContent = p.desc;
+
+  const w = $('infoWarn');
+  w.hidden = !p.warn;
+  w.textContent = p.warn;
+  w.style.color = l.color;
+
+  $('codeBox').hidden = !p.code;
+  $('codeText').textContent = p.code;
+  $('copyBtn').textContent = 'Copiar';
 }
 
-function selectPin(pin) {
-  selectedPin = pin;
-  document.querySelectorAll('.pin-btn').forEach(btn => {
-    btn.classList.toggle('selected', Number(btn.dataset.pos) === pin.pos);
-  });
+$('copyBtn').addEventListener('click', async () => {
+  const btn = $('copyBtn');
+  try {
+    await navigator.clipboard.writeText($('codeText').textContent);
+    btn.textContent = 'Copiado';
+  } catch (e) {
+    const r = document.createRange();
+    r.selectNodeContents($('codeText'));
+    const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+    btn.textContent = 'Seleccionado';
+  }
+  setTimeout(() => { btn.textContent = 'Copiar'; }, 1400);
+});
 
-  const cat = CATS[pin.cat];
-  document.getElementById('badgePin').textContent = pin.silk;
-  document.getElementById('infoBadge').style.borderColor = cat.color;
-  document.getElementById('infoTitle').textContent = `${pin.name} (Serigrafía: ${pin.silk})`;
-  document.getElementById('infoCategory').textContent = cat.label.toUpperCase();
-  document.getElementById('infoCategory').style.color = cat.color;
-  document.getElementById('infoDesc').innerHTML = pin.desc;
-}
+/* ---- Teclado ---- */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.activeElement === $('search')) {
+    $('search').value = ''; applyFilter(); return;
+  }
+  if (!selected || document.activeElement === $('search')) return;
+  let target = null;
+  if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+    const idx = selected.idx + (e.key === 'ArrowDown' ? 1 : -1);
+    target = PINS.find(p => p.side === selected.side && p.idx === idx);
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+    const side = e.key === 'ArrowRight' ? 'R' : 'L';
+    target = PINS.find(p => p.side === side && p.idx === selected.idx);
+  }
+  if (target) {
+    e.preventDefault();
+    selectPin(target);
+    els[target.pos].btn.focus({ preventScroll: true });
+  }
+});
+
+applyFilter();
 </script>
 
 </body>
